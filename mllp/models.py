@@ -315,7 +315,7 @@ class MLLP(nn.Module):
             X = X.to(self.device)
             test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False)
 
-            y = y.cpu().numpy().astype(np.int)
+            y = y.cpu().numpy().astype(int)
             y = np.argmax(y, axis=1)
             data_num = y.shape[0]
             slice_step = data_num // 40 if data_num >= 40 else 1

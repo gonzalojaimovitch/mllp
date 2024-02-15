@@ -46,7 +46,7 @@ class DBEncoder:
         continuous_data = X_df[self.f_df.loc[self.f_df[1] == 'continuous', 0]]
         if not continuous_data.empty:
             continuous_data = continuous_data.replace(to_replace=r'.*\?.*', value=np.nan, regex=True)
-            continuous_data = continuous_data.astype(np.float)
+            continuous_data = continuous_data.astype(float)
         return discrete_data, continuous_data
 
     def fit(self, X_df, y_df):
@@ -54,7 +54,7 @@ class DBEncoder:
         y_df = y_df.reset_index(drop=True)
         discrete_data, continuous_data = self.split_data(X_df)
         self.label_enc.fit(y_df)
-        self.y_fname = list(self.label_enc.get_feature_names(y_df.columns))
+        self.y_fname = list(self.label_enc.get_feature_names_out(y_df.columns))
 
         if not continuous_data.empty:
             if self.discrete:
@@ -72,7 +72,7 @@ class DBEncoder:
             # One-hot encoding
             self.feature_enc.fit(discrete_data)
             feature_names = discrete_data.columns
-            self.X_fname = list(self.feature_enc.get_feature_names(feature_names))
+            self.X_fname = list(self.feature_enc.get_feature_names_out(feature_names))
             if not self.discrete:
                 self.X_fname.extend(continuous_data.columns)
         else:

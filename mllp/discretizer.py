@@ -25,7 +25,7 @@ class MinimalEntropyDiscretizer:
         col_list = []
         for k in continuous_data:
             if len(self.boundaries[k]) > 0:
-                discrete_col = pd.DataFrame(pd.np.digitize(continuous_data[k], bins=self.boundaries[k], right=True),
+                discrete_col = pd.DataFrame(np.digitize(continuous_data[k], bins=self.boundaries[k], right=True),
                                             columns=[k])
                 name_dict = {}
                 for i in range(len(self.boundaries[k]) + 1):
