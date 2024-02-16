@@ -1,3 +1,5 @@
+Results obtained using Tests_GPU_MLLP.ipynb. Executed using the T4 GPU Colab Environment
+
 | Dataset | Structure | Replicated F1 Score MLLP Model | Replicated F1 Score CRS Model | Paper F1 Score MLLP Model* | Paper F1 Score CRS Model* | 
 |---|---|---|---|---|---|
 | tic-tac-toe | 32 32 32 | 1.0 | 0.28 | 0.99 | 0.38 |
