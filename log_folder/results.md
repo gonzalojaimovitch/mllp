@@ -15,4 +15,4 @@ Results obtained using Tests_GPU_MLLP.ipynb. Executed using the T4 GPU Colab Env
 | connect-4 | 128 128 128 | 0.53 | 0.13 | 0.56 | 0.26 |
 | connect-4 | 256 256 256 | 0.63 | 0.20 | 0.56 | 0.26 |
 
-\* The number of nodes in the middle layer is not clearly reported.
+\* The number of nodes in the middle layers is not clearly reported.
