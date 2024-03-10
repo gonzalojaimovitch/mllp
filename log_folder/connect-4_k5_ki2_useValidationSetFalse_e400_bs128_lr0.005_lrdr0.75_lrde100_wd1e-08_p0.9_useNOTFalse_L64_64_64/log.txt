@@ -1,0 +1,1054 @@
+[INFO] - Discretizing and binarizing data. Please wait ...
+[INFO] - Data discretization and binarization are done.
+[INFO] - LR is set to 0.005
+[INFO] - epoch: 0, loss: 68.47067929804325
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6
+	Accuracy of CRS  Model: 0.03333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.25
+	F1 Score of CRS  Model: 0.02150537634408602
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 1, loss: 61.535209231078625
+[INFO] - epoch: 2, loss: 58.088238559663296
+[INFO] - epoch: 3, loss: 55.80528489500284
+[INFO] - epoch: 4, loss: 56.48076871037483
+[INFO] - epoch: 5, loss: 55.474054761230946
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.6
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.28205128205128205
+	F1 Score of CRS  Model: 0.36890243902439024
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 6, loss: 53.77824265509844
+[INFO] - epoch: 7, loss: 53.6595366448164
+[INFO] - epoch: 8, loss: 53.30289317667484
+[INFO] - epoch: 9, loss: 52.73544357717037
+[INFO] - epoch: 10, loss: 53.00274609774351
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.6
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.28205128205128205
+	F1 Score of CRS  Model: 0.40170940170940167
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 11, loss: 52.5634967982769
+[INFO] - epoch: 12, loss: 53.074249133467674
+[INFO] - epoch: 13, loss: 52.72528774291277
+[INFO] - epoch: 14, loss: 52.5294439420104
+[INFO] - epoch: 15, loss: 52.873389571905136
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5333333333333333
+	Accuracy of CRS  Model: 0.43333333333333335
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2318840579710145
+	F1 Score of CRS  Model: 0.30303030303030304
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 16, loss: 52.89614509046078
+[INFO] - epoch: 17, loss: 52.74370287358761
+[INFO] - epoch: 18, loss: 52.11951421201229
+[INFO] - epoch: 19, loss: 51.81155590713024
+[INFO] - epoch: 20, loss: 52.4920803681016
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.5
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.404723564143854
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 21, loss: 52.15022874623537
+[INFO] - epoch: 22, loss: 52.4202773347497
+[INFO] - epoch: 23, loss: 51.559590578079224
+[INFO] - epoch: 24, loss: 51.78561072796583
+[INFO] - epoch: 25, loss: 51.386129692196846
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.28205128205128205
+	F1 Score of CRS  Model: 0.4145427286356822
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 26, loss: 51.33755239844322
+[INFO] - epoch: 27, loss: 51.17607023566961
+[INFO] - epoch: 28, loss: 51.51447981595993
+[INFO] - epoch: 29, loss: 50.44097547978163
+[INFO] - epoch: 30, loss: 51.14873520284891
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2745098039215686
+	F1 Score of CRS  Model: 0.2910782703886152
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 31, loss: 51.711889669299126
+[INFO] - epoch: 32, loss: 52.05466188490391
+[INFO] - epoch: 33, loss: 52.57529693841934
+[INFO] - epoch: 34, loss: 51.91434618085623
+[INFO] - epoch: 35, loss: 52.37017150223255
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.26666666666666666
+	F1 Score of CRS  Model: 0.3436609686609686
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 36, loss: 51.846189849078655
+[INFO] - epoch: 37, loss: 51.886386193335056
+[INFO] - epoch: 38, loss: 52.119613729417324
+[INFO] - epoch: 39, loss: 52.512061819434166
+[INFO] - epoch: 40, loss: 51.84591130912304
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.3747252747252747
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 41, loss: 51.47246316075325
+[INFO] - epoch: 42, loss: 52.22523506730795
+[INFO] - epoch: 43, loss: 52.04055859148502
+[INFO] - epoch: 44, loss: 52.04675634205341
+[INFO] - epoch: 45, loss: 52.49472738802433
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.6
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.5354645354645354
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 46, loss: 51.846144653856754
+[INFO] - epoch: 47, loss: 51.49316404759884
+[INFO] - epoch: 48, loss: 51.84792681783438
+[INFO] - epoch: 49, loss: 52.82052502036095
+[INFO] - epoch: 50, loss: 52.428857661783695
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6
+	Accuracy of CRS  Model: 0.4666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.25
+	F1 Score of CRS  Model: 0.3333333333333333
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 51, loss: 52.3972609564662
+[INFO] - epoch: 52, loss: 51.859006732702255
+[INFO] - epoch: 53, loss: 51.7642247825861
+[INFO] - epoch: 54, loss: 51.755000203847885
+[INFO] - epoch: 55, loss: 51.153768479824066
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6
+	Accuracy of CRS  Model: 0.5666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.25
+	F1 Score of CRS  Model: 0.49307359307359305
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 56, loss: 51.62659930437803
+[INFO] - epoch: 57, loss: 51.507513754069805
+[INFO] - epoch: 58, loss: 51.44558014720678
+[INFO] - epoch: 59, loss: 50.97888549417257
+[INFO] - epoch: 60, loss: 51.183325722813606
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.4666666666666667
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.34099616858237547
+	F1 Score of CRS  Model: 0.25416666666666665
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 61, loss: 51.40306834131479
+[INFO] - epoch: 62, loss: 51.303610533475876
+[INFO] - epoch: 63, loss: 50.80679176747799
+[INFO] - epoch: 64, loss: 51.092324167490005
+[INFO] - epoch: 65, loss: 51.04916790872812
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.06666666666666667
+	Accuracy of CRS  Model: 0.23333333333333334
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.041666666666666664
+	F1 Score of CRS  Model: 0.20634920634920637
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 66, loss: 51.97698261588812
+[INFO] - epoch: 67, loss: 52.165713250637054
+[INFO] - epoch: 68, loss: 51.11098016053438
+[INFO] - epoch: 69, loss: 50.494448252022266
+[INFO] - epoch: 70, loss: 50.81560944765806
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5
+	Accuracy of CRS  Model: 0.23333333333333334
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.310916179337232
+	F1 Score of CRS  Model: 0.22362758014931927
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 71, loss: 51.62720128893852
+[INFO] - epoch: 72, loss: 51.21334257721901
+[INFO] - epoch: 73, loss: 51.10461124032736
+[INFO] - epoch: 74, loss: 53.10644310712814
+[INFO] - epoch: 75, loss: 51.628158412873745
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.4
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2828282828282828
+	F1 Score of CRS  Model: 0.24685990338164251
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 76, loss: 53.12110919505358
+[INFO] - epoch: 77, loss: 52.066201359033585
+[INFO] - epoch: 78, loss: 51.27964737266302
+[INFO] - epoch: 79, loss: 52.6474451944232
+[INFO] - epoch: 80, loss: 51.210606306791306
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2745098039215686
+	F1 Score of CRS  Model: 0.2869699603979523
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 81, loss: 51.56627631187439
+[INFO] - epoch: 82, loss: 51.84855683147907
+[INFO] - epoch: 83, loss: 51.11896785348654
+[INFO] - epoch: 84, loss: 51.9463677406311
+[INFO] - epoch: 85, loss: 52.07994972169399
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.4666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.43562610229276894
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 86, loss: 52.08705447614193
+[INFO] - epoch: 87, loss: 52.00800596922636
+[INFO] - epoch: 88, loss: 51.59020821005106
+[INFO] - epoch: 89, loss: 51.73524894565344
+[INFO] - epoch: 90, loss: 51.69868069887161
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.1
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.08
+	F1 Score of CRS  Model: 0.2675862068965517
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 91, loss: 51.621096670627594
+[INFO] - epoch: 92, loss: 51.63155001401901
+[INFO] - epoch: 93, loss: 50.36621976643801
+[INFO] - epoch: 94, loss: 51.03874605149031
+[INFO] - epoch: 95, loss: 50.979560382664204
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.13333333333333333
+	Accuracy of CRS  Model: 0.1
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.10394802598700649
+	F1 Score of CRS  Model: 0.100664767331434
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 96, loss: 51.10813066363335
+[INFO] - epoch: 97, loss: 50.18792901933193
+[INFO] - epoch: 98, loss: 51.32548465579748
+[INFO] - epoch: 99, loss: 50.789016626775265
+[INFO] - LR is set to 0.00375
+[INFO] - epoch: 100, loss: 50.79384031146765
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.8333333333333334
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.45454545454545453
+	F1 Score of CRS  Model: 0.2818627450980392
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 101, loss: 50.973075188696384
+[INFO] - epoch: 102, loss: 51.791489362716675
+[INFO] - epoch: 103, loss: 51.63493783771992
+[INFO] - epoch: 104, loss: 51.60033769905567
+[INFO] - epoch: 105, loss: 50.89169708639383
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.6333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.5994502748625687
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 106, loss: 50.600023061037064
+[INFO] - epoch: 107, loss: 51.80799239873886
+[INFO] - epoch: 108, loss: 51.7528480142355
+[INFO] - epoch: 109, loss: 51.272122859954834
+[INFO] - epoch: 110, loss: 51.68667221814394
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5666666666666667
+	Accuracy of CRS  Model: 0.5
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.24113475177304966
+	F1 Score of CRS  Model: 0.46676163342830007
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 111, loss: 51.51372139155865
+[INFO] - epoch: 112, loss: 51.71931290626526
+[INFO] - epoch: 113, loss: 51.24422316998243
+[INFO] - epoch: 114, loss: 51.812382847070694
+[INFO] - epoch: 115, loss: 51.395411886274815
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7
+	Accuracy of CRS  Model: 0.5666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2745098039215686
+	F1 Score of CRS  Model: 0.41964285714285715
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 116, loss: 51.424229487776756
+[INFO] - epoch: 117, loss: 51.011866219341755
+[INFO] - epoch: 118, loss: 50.67459075897932
+[INFO] - epoch: 119, loss: 50.561014629900455
+[INFO] - epoch: 120, loss: 50.64127128571272
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.5666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.26666666666666666
+	F1 Score of CRS  Model: 0.5927969348659003
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 121, loss: 49.8047708645463
+[INFO] - epoch: 122, loss: 49.85950244218111
+[INFO] - epoch: 123, loss: 49.736475206911564
+[INFO] - epoch: 124, loss: 49.57226850092411
+[INFO] - epoch: 125, loss: 49.143334202468395
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.5333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.28205128205128205
+	F1 Score of CRS  Model: 0.36833333333333335
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 126, loss: 49.487927697598934
+[INFO] - epoch: 127, loss: 49.630903370678425
+[INFO] - epoch: 128, loss: 49.091035798192024
+[INFO] - epoch: 129, loss: 48.85051027685404
+[INFO] - epoch: 130, loss: 49.246609300374985
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.43333333333333335
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.4
+	F1 Score of CRS  Model: 0.30952380952380953
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 131, loss: 49.16947168856859
+[INFO] - epoch: 132, loss: 49.586143366992474
+[INFO] - epoch: 133, loss: 49.32329688221216
+[INFO] - epoch: 134, loss: 49.429058723151684
+[INFO] - epoch: 135, loss: 49.4447400867939
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.4666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.43121693121693117
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 136, loss: 48.8419578447938
+[INFO] - epoch: 137, loss: 49.2399625107646
+[INFO] - epoch: 138, loss: 48.93772263079882
+[INFO] - epoch: 139, loss: 48.592436634004116
+[INFO] - epoch: 140, loss: 48.8816142603755
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.5666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.26666666666666666
+	F1 Score of CRS  Model: 0.49719887955182074
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 141, loss: 49.010488241910934
+[INFO] - epoch: 142, loss: 49.08156233280897
+[INFO] - epoch: 143, loss: 48.44583199173212
+[INFO] - epoch: 144, loss: 48.595058150589466
+[INFO] - epoch: 145, loss: 49.11416770517826
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3333333333333333
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2594871794871795
+	F1 Score of CRS  Model: 0.4090354090354091
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 146, loss: 48.94416020810604
+[INFO] - epoch: 147, loss: 48.49075888097286
+[INFO] - epoch: 148, loss: 49.50821216404438
+[INFO] - epoch: 149, loss: 49.622408486902714
+[INFO] - epoch: 150, loss: 49.1197128072381
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.13333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.12599681020733652
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 151, loss: 49.6533584818244
+[INFO] - epoch: 152, loss: 50.122596353292465
+[INFO] - epoch: 153, loss: 50.09484330564737
+[INFO] - epoch: 154, loss: 49.475852966308594
+[INFO] - epoch: 155, loss: 49.67981546372175
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7666666666666667
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.4339622641509434
+	F1 Score of CRS  Model: 0.23911630929174787
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 156, loss: 49.009692929685116
+[INFO] - epoch: 157, loss: 49.33692596107721
+[INFO] - epoch: 158, loss: 49.08709608018398
+[INFO] - epoch: 159, loss: 49.10618790984154
+[INFO] - epoch: 160, loss: 49.33289624750614
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.43333333333333335
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.26666666666666666
+	F1 Score of CRS  Model: 0.4266856600189934
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 161, loss: 49.566967621445656
+[INFO] - epoch: 162, loss: 48.909996300935745
+[INFO] - epoch: 163, loss: 49.17087507247925
+[INFO] - epoch: 164, loss: 48.84231200069189
+[INFO] - epoch: 165, loss: 49.05436612665653
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.43333333333333335
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.42753036437246966
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 166, loss: 49.109716042876244
+[INFO] - epoch: 167, loss: 48.7672618702054
+[INFO] - epoch: 168, loss: 48.00547407567501
+[INFO] - epoch: 169, loss: 49.236870899796486
+[INFO] - epoch: 170, loss: 48.88593214005232
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3333333333333333
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2497625830959164
+	F1 Score of CRS  Model: 0.32258341933264534
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 171, loss: 49.36239591985941
+[INFO] - epoch: 172, loss: 49.2746215313673
+[INFO] - epoch: 173, loss: 49.20961552858353
+[INFO] - epoch: 174, loss: 49.475360445678234
+[INFO] - epoch: 175, loss: 48.924073435366154
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.5
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.43756449948400417
+	F1 Score of CRS  Model: 0.45
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 176, loss: 49.029688350856304
+[INFO] - epoch: 177, loss: 48.60589583218098
+[INFO] - epoch: 178, loss: 48.402195908129215
+[INFO] - epoch: 179, loss: 48.2315916121006
+[INFO] - epoch: 180, loss: 48.94036839902401
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.4666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2585034013605442
+	F1 Score of CRS  Model: 0.43562610229276894
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 181, loss: 48.7286166921258
+[INFO] - epoch: 182, loss: 48.23819497972727
+[INFO] - epoch: 183, loss: 47.590415611863136
+[INFO] - epoch: 184, loss: 48.00653350353241
+[INFO] - epoch: 185, loss: 48.04304665327072
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.36666666666666664
+	Accuracy of CRS  Model: 0.23333333333333334
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2704761904761905
+	F1 Score of CRS  Model: 0.18286311389759666
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 186, loss: 48.37485422194004
+[INFO] - epoch: 187, loss: 49.33383014053106
+[INFO] - epoch: 188, loss: 48.305240117013454
+[INFO] - epoch: 189, loss: 48.63316444307566
+[INFO] - epoch: 190, loss: 48.18759302049875
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3333333333333333
+	Accuracy of CRS  Model: 0.43333333333333335
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.23247863247863246
+	F1 Score of CRS  Model: 0.3196672608437314
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 191, loss: 48.303125724196434
+[INFO] - epoch: 192, loss: 48.34652445465326
+[INFO] - epoch: 193, loss: 49.096502006053925
+[INFO] - epoch: 194, loss: 48.69508586078882
+[INFO] - epoch: 195, loss: 48.18312805145979
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.2
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3055555555555555
+	F1 Score of CRS  Model: 0.1634920634920635
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 196, loss: 48.84126200526953
+[INFO] - epoch: 197, loss: 48.70415908098221
+[INFO] - epoch: 198, loss: 49.24840035289526
+[INFO] - epoch: 199, loss: 48.687110513448715
+[INFO] - LR is set to 0.0028125
+[INFO] - epoch: 200, loss: 48.91089967638254
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.26666666666666666
+	F1 Score of CRS  Model: 0.25971792225662194
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 201, loss: 48.55239316821098
+[INFO] - epoch: 202, loss: 49.07185755670071
+[INFO] - epoch: 203, loss: 48.613776221871376
+[INFO] - epoch: 204, loss: 49.11985196173191
+[INFO] - epoch: 205, loss: 48.466630443930626
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3633333333333333
+	F1 Score of CRS  Model: 0.2877846790890269
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 206, loss: 48.73312734812498
+[INFO] - epoch: 207, loss: 48.520937487483025
+[INFO] - epoch: 208, loss: 47.772900596261024
+[INFO] - epoch: 209, loss: 47.81329108774662
+[INFO] - epoch: 210, loss: 47.86655569076538
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.4666666666666667
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2222222222222222
+	F1 Score of CRS  Model: 0.32625948930296755
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 211, loss: 48.21043240278959
+[INFO] - epoch: 212, loss: 48.280053079128265
+[INFO] - epoch: 213, loss: 47.84612303972244
+[INFO] - epoch: 214, loss: 48.41070035099983
+[INFO] - epoch: 215, loss: 47.58428695052862
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.28205128205128205
+	F1 Score of CRS  Model: 0.3546218487394958
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 216, loss: 48.714058607816696
+[INFO] - epoch: 217, loss: 48.73715778440237
+[INFO] - epoch: 218, loss: 48.88854084908962
+[INFO] - epoch: 219, loss: 48.871750101447105
+[INFO] - epoch: 220, loss: 49.15729147195816
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7333333333333333
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.5
+	F1 Score of CRS  Model: 0.38888888888888884
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 221, loss: 48.55381312966347
+[INFO] - epoch: 222, loss: 47.937715254724026
+[INFO] - epoch: 223, loss: 48.13058506697416
+[INFO] - epoch: 224, loss: 48.11288237571716
+[INFO] - epoch: 225, loss: 48.36554213613272
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5666666666666667
+	Accuracy of CRS  Model: 0.4666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.33512224209898633
+	F1 Score of CRS  Model: 0.4597612958226769
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 226, loss: 48.32366479188204
+[INFO] - epoch: 227, loss: 48.26215809583664
+[INFO] - epoch: 228, loss: 47.70897329598665
+[INFO] - epoch: 229, loss: 47.90252923220396
+[INFO] - epoch: 230, loss: 47.51857306808233
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5
+	Accuracy of CRS  Model: 0.5
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3062200956937799
+	F1 Score of CRS  Model: 0.4786842105263158
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 231, loss: 47.8651784658432
+[INFO] - epoch: 232, loss: 48.06949242949486
+[INFO] - epoch: 233, loss: 47.84602475166321
+[INFO] - epoch: 234, loss: 47.43103035539389
+[INFO] - epoch: 235, loss: 47.43109833449125
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.35139573070607555
+	F1 Score of CRS  Model: 0.3667116509221772
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 236, loss: 47.5175122320652
+[INFO] - epoch: 237, loss: 47.35264854133129
+[INFO] - epoch: 238, loss: 47.27421693503857
+[INFO] - epoch: 239, loss: 47.17207385599613
+[INFO] - epoch: 240, loss: 46.62230262905359
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.43333333333333335
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.24761904761904763
+	F1 Score of CRS  Model: 0.23777777777777778
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 241, loss: 47.73241229355335
+[INFO] - epoch: 242, loss: 47.09484728425741
+[INFO] - epoch: 243, loss: 47.34755878150463
+[INFO] - epoch: 244, loss: 47.440339997410774
+[INFO] - epoch: 245, loss: 46.90244297683239
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.4
+	Accuracy of CRS  Model: 0.43333333333333335
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.26551226551226553
+	F1 Score of CRS  Model: 0.36771526517443026
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 246, loss: 47.164281353354454
+[INFO] - epoch: 247, loss: 47.27358029037714
+[INFO] - epoch: 248, loss: 46.84418237954378
+[INFO] - epoch: 249, loss: 47.54901001602411
+[INFO] - epoch: 250, loss: 47.35436364263296
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.23076923076923075
+	F1 Score of CRS  Model: 0.3612535612535613
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 251, loss: 47.02825667709112
+[INFO] - epoch: 252, loss: 47.15555018186569
+[INFO] - epoch: 253, loss: 47.85581334680319
+[INFO] - epoch: 254, loss: 47.54121903330088
+[INFO] - epoch: 255, loss: 47.503562733531
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3333333333333333
+	Accuracy of CRS  Model: 0.5333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.24611223799864776
+	F1 Score of CRS  Model: 0.41718426501035194
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 256, loss: 47.10655211657286
+[INFO] - epoch: 257, loss: 47.542801178991795
+[INFO] - epoch: 258, loss: 47.727876372635365
+[INFO] - epoch: 259, loss: 47.408302053809166
+[INFO] - epoch: 260, loss: 47.290954515337944
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.2
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.13675213675213674
+	F1 Score of CRS  Model: 0.2349206349206349
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 261, loss: 47.03813946992159
+[INFO] - epoch: 262, loss: 47.01120811700821
+[INFO] - epoch: 263, loss: 47.15962589532137
+[INFO] - epoch: 264, loss: 47.46071615815163
+[INFO] - epoch: 265, loss: 47.389214403927326
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.13333333333333333
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.11111111111111112
+	F1 Score of CRS  Model: 0.32621408593948636
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 266, loss: 47.70261440426111
+[INFO] - epoch: 267, loss: 47.66807546466589
+[INFO] - epoch: 268, loss: 47.054585076868534
+[INFO] - epoch: 269, loss: 47.65604943782091
+[INFO] - epoch: 270, loss: 47.794564478099346
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.36666666666666664
+	Accuracy of CRS  Model: 0.5
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2884615384615385
+	F1 Score of CRS  Model: 0.4576719576719577
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 271, loss: 47.6141674593091
+[INFO] - epoch: 272, loss: 47.14647976309061
+[INFO] - epoch: 273, loss: 47.018794156610966
+[INFO] - epoch: 274, loss: 46.93913273513317
+[INFO] - epoch: 275, loss: 47.22344175726175
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3
+	Accuracy of CRS  Model: 0.6666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2142110762800418
+	F1 Score of CRS  Model: 0.5578643578643578
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 276, loss: 47.50188536196947
+[INFO] - epoch: 277, loss: 47.84775447100401
+[INFO] - epoch: 278, loss: 47.42881727963686
+[INFO] - epoch: 279, loss: 47.54177913069725
+[INFO] - epoch: 280, loss: 47.42153464257717
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3259259259259259
+	F1 Score of CRS  Model: 0.3642825011246063
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 281, loss: 47.7376696690917
+[INFO] - epoch: 282, loss: 47.53101205825806
+[INFO] - epoch: 283, loss: 47.61723440885544
+[INFO] - epoch: 284, loss: 47.87011066824198
+[INFO] - epoch: 285, loss: 47.52373153716326
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5666666666666667
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.24113475177304966
+	F1 Score of CRS  Model: 0.3335964912280702
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 286, loss: 47.80930705368519
+[INFO] - epoch: 287, loss: 47.837523847818375
+[INFO] - epoch: 288, loss: 47.4057449772954
+[INFO] - epoch: 289, loss: 47.82915098965168
+[INFO] - epoch: 290, loss: 47.83272347599268
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6666666666666666
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.28368794326241137
+	F1 Score of CRS  Model: 0.36565656565656574
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 291, loss: 47.56619103997946
+[INFO] - epoch: 292, loss: 47.76784447580576
+[INFO] - epoch: 293, loss: 48.045106910169125
+[INFO] - epoch: 294, loss: 48.13897309452295
+[INFO] - epoch: 295, loss: 47.59331554546952
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.8666666666666667
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.30952380952380953
+	F1 Score of CRS  Model: 0.2203548085901027
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 296, loss: 47.77995140105486
+[INFO] - epoch: 297, loss: 47.40814124792814
+[INFO] - epoch: 298, loss: 47.07642977684736
+[INFO] - epoch: 299, loss: 47.592831417918205
+[INFO] - LR is set to 0.002109375
+[INFO] - epoch: 300, loss: 47.38853047788143
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5666666666666667
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3086680761099366
+	F1 Score of CRS  Model: 0.3654546995508094
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 301, loss: 47.317350678145885
+[INFO] - epoch: 302, loss: 47.998578138649464
+[INFO] - epoch: 303, loss: 47.5446300804615
+[INFO] - epoch: 304, loss: 48.136939235031605
+[INFO] - epoch: 305, loss: 48.60408562421799
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3
+	Accuracy of CRS  Model: 0.3
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.24787775891341254
+	F1 Score of CRS  Model: 0.31026315789473685
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 306, loss: 47.635015316307545
+[INFO] - epoch: 307, loss: 47.467183120548725
+[INFO] - epoch: 308, loss: 47.31202834099531
+[INFO] - epoch: 309, loss: 47.52895852923393
+[INFO] - epoch: 310, loss: 47.22171514481306
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2080808080808081
+	F1 Score of CRS  Model: 0.2908158508158509
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 311, loss: 47.41523068398237
+[INFO] - epoch: 312, loss: 47.39500606060028
+[INFO] - epoch: 313, loss: 47.43441853672266
+[INFO] - epoch: 314, loss: 47.50988540798426
+[INFO] - epoch: 315, loss: 47.43823382258415
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.23333333333333334
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.18162393162393164
+	F1 Score of CRS  Model: 0.2571089041677277
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 316, loss: 47.27873470634222
+[INFO] - epoch: 317, loss: 47.09511063992977
+[INFO] - epoch: 318, loss: 47.41975659132004
+[INFO] - epoch: 319, loss: 47.49564327299595
+[INFO] - epoch: 320, loss: 47.590555883944035
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.26666666666666666
+	Accuracy of CRS  Model: 0.3
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.24881676808654496
+	F1 Score of CRS  Model: 0.29978354978354976
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 321, loss: 47.055570647120476
+[INFO] - epoch: 322, loss: 47.09222322702408
+[INFO] - epoch: 323, loss: 47.57801393419504
+[INFO] - epoch: 324, loss: 47.66821452975273
+[INFO] - epoch: 325, loss: 47.30200798809528
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.3
+	Accuracy of CRS  Model: 0.3
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.2212121212121212
+	F1 Score of CRS  Model: 0.2871794871794872
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 326, loss: 47.611179418861866
+[INFO] - epoch: 327, loss: 47.33358021825552
+[INFO] - epoch: 328, loss: 47.75737978518009
+[INFO] - epoch: 329, loss: 47.39729982614517
+[INFO] - epoch: 330, loss: 47.43979958444834
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.4
+	Accuracy of CRS  Model: 0.23333333333333334
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3076923076923077
+	F1 Score of CRS  Model: 0.22424242424242424
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 331, loss: 47.45174251496792
+[INFO] - epoch: 332, loss: 47.311608381569386
+[INFO] - epoch: 333, loss: 50.02306377142668
+[INFO] - epoch: 334, loss: 49.697341077029705
+[INFO] - epoch: 335, loss: 50.37878583371639
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.26666666666666666
+	Accuracy of CRS  Model: 0.16666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.19963369963369962
+	F1 Score of CRS  Model: 0.1851851851851852
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 336, loss: 51.557308577001095
+[INFO] - epoch: 337, loss: 51.357897348701954
+[INFO] - epoch: 338, loss: 49.68934550881386
+[INFO] - epoch: 339, loss: 49.64242247492075
+[INFO] - epoch: 340, loss: 48.77542346715927
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.1
+	Accuracy of CRS  Model: 0.5666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.06060606060606061
+	F1 Score of CRS  Model: 0.5189255189255189
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 341, loss: 49.0257743448019
+[INFO] - epoch: 342, loss: 49.18223965913057
+[INFO] - epoch: 343, loss: 48.48863099515438
+[INFO] - epoch: 344, loss: 48.90152360498905
+[INFO] - epoch: 345, loss: 48.45944515615702
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.03333333333333333
+	Accuracy of CRS  Model: 0.23333333333333334
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.07407407407407407
+	F1 Score of CRS  Model: 0.20793650793650795
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 346, loss: 49.17942827194929
+[INFO] - epoch: 347, loss: 48.716697096824646
+[INFO] - epoch: 348, loss: 48.98985608667135
+[INFO] - epoch: 349, loss: 48.159711077809334
+[INFO] - epoch: 350, loss: 47.73382295668125
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.341991341991342
+	F1 Score of CRS  Model: 0.3439153439153439
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 351, loss: 47.49364650249481
+[INFO] - epoch: 352, loss: 48.29015599936247
+[INFO] - epoch: 353, loss: 47.92834846675396
+[INFO] - epoch: 354, loss: 47.820388935506344
+[INFO] - epoch: 355, loss: 48.25479807704687
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.7666666666666667
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.5098039215686274
+	F1 Score of CRS  Model: 0.35555555555555557
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 356, loss: 48.07329968363047
+[INFO] - epoch: 357, loss: 47.364624351263046
+[INFO] - epoch: 358, loss: 47.53716900199652
+[INFO] - epoch: 359, loss: 48.2376356869936
+[INFO] - epoch: 360, loss: 47.993639305233955
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.4
+	Accuracy of CRS  Model: 0.4
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.21621621621621623
+	F1 Score of CRS  Model: 0.334508547008547
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 361, loss: 47.369141176342964
+[INFO] - epoch: 362, loss: 49.0269371047616
+[INFO] - epoch: 363, loss: 49.327290900051594
+[INFO] - epoch: 364, loss: 48.77288293093443
+[INFO] - epoch: 365, loss: 48.20770689100027
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.23333333333333334
+	Accuracy of CRS  Model: 0.3333333333333333
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.18412698412698414
+	F1 Score of CRS  Model: 0.30238095238095236
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 366, loss: 48.9405403137207
+[INFO] - epoch: 367, loss: 47.89492529630661
+[INFO] - epoch: 368, loss: 47.93278196454048
+[INFO] - epoch: 369, loss: 48.430113926529884
+[INFO] - epoch: 370, loss: 47.578189603984356
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6
+	Accuracy of CRS  Model: 0.36666666666666664
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.611111111111111
+	F1 Score of CRS  Model: 0.3747863247863248
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 371, loss: 47.81404750794172
+[INFO] - epoch: 372, loss: 48.372407637536526
+[INFO] - epoch: 373, loss: 48.28589163720608
+[INFO] - epoch: 374, loss: 47.856279499828815
+[INFO] - epoch: 375, loss: 47.78599803894758
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5
+	Accuracy of CRS  Model: 0.16666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.29005847953216374
+	F1 Score of CRS  Model: 0.13752913752913754
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 376, loss: 47.69839159399271
+[INFO] - epoch: 377, loss: 47.725509002804756
+[INFO] - epoch: 378, loss: 48.088392183184624
+[INFO] - epoch: 379, loss: 47.68326938152313
+[INFO] - epoch: 380, loss: 47.92173759639263
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.5333333333333333
+	Accuracy of CRS  Model: 0.16666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.3240454076367389
+	F1 Score of CRS  Model: 0.19089026915113871
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 381, loss: 47.7594094350934
+[INFO] - epoch: 382, loss: 47.98136327415705
+[INFO] - epoch: 383, loss: 47.80809175223112
+[INFO] - epoch: 384, loss: 47.41826469451189
+[INFO] - epoch: 385, loss: 47.60564399510622
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.13333333333333333
+	Accuracy of CRS  Model: 0.3
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.10897435897435898
+	F1 Score of CRS  Model: 0.2492753623188406
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 386, loss: 47.21775036305189
+[INFO] - epoch: 387, loss: 47.37544476240873
+[INFO] - epoch: 388, loss: 47.56115686148405
+[INFO] - epoch: 389, loss: 47.37350434064865
+[INFO] - epoch: 390, loss: 47.14243049174547
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.6333333333333333
+	Accuracy of CRS  Model: 0.26666666666666666
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.367965367965368
+	F1 Score of CRS  Model: 0.19555555555555557
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 391, loss: 47.189837500452995
+[INFO] - epoch: 392, loss: 46.78139974921942
+[INFO] - epoch: 393, loss: 46.94663883373141
+[INFO] - epoch: 394, loss: 47.05843233317137
+[INFO] - epoch: 395, loss: 47.50171806663275
+[INFO] - ------------------------------------------------------------
+[INFO] - On Training Set:
+	Accuracy of MLLP Model: 0.8
+	Accuracy of CRS  Model: 0.5666666666666667
+[INFO] - On Training Set:
+	F1 Score of MLLP Model: 0.784688995215311
+	F1 Score of CRS  Model: 0.4666666666666666
+[INFO] - ------------------------------------------------------------
+[INFO] - epoch: 396, loss: 47.15500197559595
+[INFO] - epoch: 397, loss: 47.480304040014744
+[INFO] - epoch: 398, loss: 47.70689833909273
+[INFO] - epoch: 399, loss: 47.81396020948887
+[INFO] - ============================================================
+[INFO] - Test:
+	Accuracy of MLLP Model: 0.495152098290282
+	Accuracy of CRS  Model: 0.38716601287839536
+[INFO] - Test:
+	F1 Score of MLLP Model: 0.34650298248890016
+	F1 Score of CRS  Model: 0.36358743712551617
+[INFO] - ============================================================
