@@ -7,6 +7,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn import metrics
 from collections import defaultdict
+from tqdm import tqdm
 
 from mllp.utils import UnionFind
 
@@ -264,12 +265,12 @@ class MLLP(nn.Module):
 
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
-        for epo in range(epoch):
+        for epo in tqdm(range(epoch)):
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
                                               lr_decay_epoch=lr_decay_epoch)
             running_loss = 0.0
             cnt = 0
-            for X, y in data_loader:
+            for X, y in tqdm(data_loader):
                 X = X.to(self.device)
                 y = y.to(self.device)
                 optimizer.zero_grad()  # Zero the gradient buffers.
@@ -324,7 +325,7 @@ class MLLP(nn.Module):
             # Test the model batch by batch.
             # Test the MLLP.
             y_pred_list = []
-            for X, in test_loader:
+            for X, in tqdm(test_loader):
                 y_pred_list.append(self.forward(X))
             y_pred = torch.cat(y_pred_list)
             y_pred = y_pred.cpu().numpy()
