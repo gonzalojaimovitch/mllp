@@ -1,0 +1,18 @@
+------------------------------------------------------------------------------------------
+ class_0:
+	       r1,7:	 [' variance_of_Wavelet_Transformed_image_(0.31803, 1.7875]', ' curtosis_of_Wavelet_Transformed_image_(-4.4327, 8.8294]']
+	      r1,10:	 [' skewness_of_Wavelet_Transformed_image_>9.6014', ' curtosis_of_Wavelet_Transformed_image_(-4.4327, 8.8294]']
+	      r1,15:	 [' variance_of_Wavelet_Transformed_image_>2.3917']
+	      r1,18:	 [' variance_of_Wavelet_Transformed_image_(-0.40804, 0.31803]', ' skewness_of_Wavelet_Transformed_image_(5.2022, 9.6014]', ' curtosis_of_Wavelet_Transformed_image_(-4.4327, 8.8294]']
+	      r1,29:	 [' variance_of_Wavelet_Transformed_image_(1.7875, 2.3917]', ' curtosis_of_Wavelet_Transformed_image_(-4.4327, 8.8294]']
+	      r1,48:	 [' variance_of_Wavelet_Transformed_image_(-2.799, -0.40804]', ' skewness_of_Wavelet_Transformed_image_(5.2022, 9.6014]', ' curtosis_of_Wavelet_Transformed_image_(-4.4327, 8.8294]']
+	      r1,54:	 [' variance_of_Wavelet_Transformed_image_(0.31803, 1.7875]', ' skewness_of_Wavelet_Transformed_image_(5.2022, 9.6014]']
+ class_1:
+	       r1,1:	 [' variance_of_Wavelet_Transformed_image_<=-2.799']
+	      r1,13:	 [' variance_of_Wavelet_Transformed_image_(-2.799, -0.40804]', ' skewness_of_Wavelet_Transformed_image_<=-6.959']
+	      r1,14:	 [' variance_of_Wavelet_Transformed_image_(-0.40804, 0.31803]', ' skewness_of_Wavelet_Transformed_image_(-2.3507, 5.2022]']
+	      r1,22:	 [' variance_of_Wavelet_Transformed_image_(-2.799, -0.40804]', ' skewness_of_Wavelet_Transformed_image_(-4.9932, -2.3507]', ' curtosis_of_Wavelet_Transformed_image_(-4.4327, 8.8294]']
+	      r1,36:	 [' variance_of_Wavelet_Transformed_image_(-2.799, -0.40804]', ' skewness_of_Wavelet_Transformed_image_(-5.6574, -4.9932]']
+	      r1,39:	 [' skewness_of_Wavelet_Transformed_image_(-2.3507, 5.2022]', ' curtosis_of_Wavelet_Transformed_image_<=-4.4327']
+	      r1,51:	 [' variance_of_Wavelet_Transformed_image_(-2.799, -0.40804]', ' skewness_of_Wavelet_Transformed_image_(-2.3507, 5.2022]']
+	      r1,52:	 [' variance_of_Wavelet_Transformed_image_(-2.799, -0.40804]', ' skewness_of_Wavelet_Transformed_image_(-6.959, -5.6574]']

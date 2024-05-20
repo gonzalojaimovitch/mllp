@@ -1,0 +1,19 @@
+------------------------------------------------------------------------------------------
+ Class_1:
+	      r1,23:	 [' Alcohol_>12.77', ' Alcalinity_of_ash_<=17.8', ' Magnesium_>88.0', ' Flavanoids_>2.29', ' OD280/OD315_of_diluted_wines_>2.47', ' Proline_>985.0']
+	      r1,57:	 [' Alcohol_>12.77', ' Magnesium_>88.0', ' Flavanoids_>2.29', ' Color_intensity_(3.4, 7.5]', ' OD280/OD315_of_diluted_wines_>2.47']
+ Class_2:
+	      r1,15:	 [' Flavanoids_(1.57, 2.29]']
+	      r1,16:	 [' Malic_acid_<=1.41', ' Ash_<=2.02', ' Hue_(0.97, 1.28]', ' Proline_(466.0, 750.0]']
+	      r1,22:	 [' Color_intensity_<=3.4']
+	      r1,28:	 [' Alcohol_<=12.17', ' Magnesium_<=88.0', ' Hue_(0.97, 1.28]', ' Proline_<=466.0']
+	      r1,29:	 [' Malic_acid_<=1.41', ' Total_phenols_(1.83, 2.32]', ' Hue_(0.97, 1.28]', ' Proline_(466.0, 750.0]']
+	      r1,37:	 [' Magnesium_<=88.0', ' Hue_(0.97, 1.28]', ' OD280/OD315_of_diluted_wines_>2.47', ' Proline_<=466.0']
+	      r1,47:	 [' Alcohol_<=12.17', ' Total_phenols_<=1.83', ' Hue_(0.97, 1.28]', ' Proline_<=466.0']
+	      r1,60:	 [' Alcohol_(12.17, 12.77]', ' Alcalinity_of_ash_>17.8', ' Magnesium_<=88.0', ' Hue_(0.97, 1.28]', ' OD280/OD315_of_diluted_wines_>2.47']
+ Class_3:
+	      r1,12:	 [' Ash_>2.02', ' Alcalinity_of_ash_>17.8', ' Hue_<=0.78', ' OD280/OD315_of_diluted_wines_<=2.11']
+	      r1,13:	 [' Alcalinity_of_ash_>17.8', ' Magnesium_>88.0', ' Flavanoids_<=0.96', ' OD280/OD315_of_diluted_wines_<=2.11']
+	      r1,21:	 [' Alcohol_>12.77', ' Alcalinity_of_ash_>17.8', ' Magnesium_>88.0', ' Hue_<=0.78', ' OD280/OD315_of_diluted_wines_<=2.11', ' Proline_(466.0, 750.0]']
+	      r1,42:	 [' Alcohol_>12.77', ' Malic_acid_>2.16', ' Alcalinity_of_ash_>17.8', ' Flavanoids_<=0.96']
+	      r1,44:	 [' Alcalinity_of_ash_>17.8', ' Total_phenols_<=1.83', ' Flavanoids_<=0.96', ' OD280/OD315_of_diluted_wines_<=2.11']

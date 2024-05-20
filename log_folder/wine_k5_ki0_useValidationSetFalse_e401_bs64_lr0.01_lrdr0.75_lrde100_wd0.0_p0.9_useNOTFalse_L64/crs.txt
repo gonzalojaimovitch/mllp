@@ -1,0 +1,12 @@
+------------------------------------------------------------------------------------------
+ Class_1:
+	      r1,20:	 [' Nonflavanoid_phenols_<=0.39', ' Proline_>985.0']
+	      r1,58:	 [' Alcohol_>12.77', ' Ash_>2.02', ' Magnesium_>88.0', ' Color_intensity_(3.4, 7.5]', ' OD280/OD315_of_diluted_wines_>2.47']
+ Class_2:
+	       r1,3:	 [' Magnesium_<=88.0', ' OD280/OD315_of_diluted_wines_>2.47']
+	      r1,29:	 [' Color_intensity_<=3.4']
+	      r1,39:	 [' Alcohol_<=12.17']
+	      r1,57:	 [' Ash_<=2.02']
+ Class_3:
+	       r1,0:	 [' Alcalinity_of_ash_>17.8', ' OD280/OD315_of_diluted_wines_<=2.11']
+	      r1,12:	 [' Alcohol_>12.77', ' Flavanoids_<=0.96']
