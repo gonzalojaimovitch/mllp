@@ -18,3 +18,5 @@ netwo". In their implementation, specifically the L0MLP, they use ReLU activatio
 
 - The weights are initialized as in the MLLP repo, with a small value between 0 and 0.1, avoiding the L0 Reg repo Kaiming initialization, which includes negative values. Furthermore, the weights are clipped between 0 and 1 for each optimization step. The AND and OR activation functions from the Conjunction and Disjunction layers require the weights to be between 0 and 1. I am not sure if this could affect any mathematical implication of the L0 Regularization.
 - answer (Luca): that's another good point. I should verify the mathematical details.
+- The weights are initialized as in the MLLP repo, with a small value between 0 and 0.1, avoiding the L0 Reg repo Kaiming initialization, which includes negative values. Furthermore, the weights are clipped between 0 and 1 for each optimization step. The AND and OR activation functions from the Conjunction and Disjunction layers require the weights to be between 0 and 1. I am not sure if this could affect any mathematical implication of the L0 Regularization. Take into consideration ReLU also makes everything negative into 0.
+

@@ -55,7 +55,7 @@ class L0ConjunctionLayer(nn.Module):
     - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
     """
 
-    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=1., local_rep=False, **kwargs): # UPDATED
+    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=0.1, local_rep=False, **kwargs): # UPDATED
         super(L0ConjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
@@ -67,10 +67,12 @@ class L0ConjunctionLayer(nn.Module):
         self.sampled_weights = None # NEW
         self.qz_loga = Parameter(torch.Tensor(in_features)) # NEW
         self.temperature = temperature # NEW
-        self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
+        # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
+        self.droprate_init = droprate_init # NEW
         self.lamba = lamba # NEW
         self.use_bias = False # NEW
         self.local_rep = local_rep # NEW
+        self.mask_zero_weights  = None # NEW
         if bias: # NEW
             self.bias = Parameter(torch.Tensor(out_features)) # NEW
             self.use_bias = True # NEW
@@ -134,25 +136,18 @@ class L0ConjunctionLayer(nn.Module):
     def regularization(self): # NEW
         return self._reg_w()
 
-    def count_expected_flops_and_l0(self): # NEW
+    def count_expected_flops_and_l0(self):
         """Measures the expected floating point operations (FLOPs) and the expected L0 norm"""
+        # dim_in multiplications and dim_in - 1 additions for each output neuron for the weights
+        # + the bias addition for each neuron
+        # total_flops = (2 * in_features - 1) * out_features + out_features
         ppos = torch.sum(1 - self.cdf_qz(0))
-        n = self.kernel_size[0] * self.kernel_size[1] * self.in_channels  # vector_length
-        flops_per_instance = n + (n - 1)  # (n: multiplications and n-1: additions)
-
-        num_instances_per_filter = ((self.input_shape[1] - self.kernel_size[0] + 2 * self.padding[0]) / self.stride[0]) + 1  # for rows
-        num_instances_per_filter *= ((self.input_shape[2] - self.kernel_size[1] + 2 * self.padding[1]) / self.stride[1]) + 1  # multiplying with cols
-
-        flops_per_filter = num_instances_per_filter * flops_per_instance
-        expected_flops = flops_per_filter * ppos  # multiply with number of filters
-        expected_l0 = n * ppos
-
+        expected_flops = (2 * ppos - 1) * self.out_features
+        expected_l0 = ppos * self.out_features
         if self.use_bias:
-            # since the gate is applied to the output we also reduce the bias computation
-            expected_flops += num_instances_per_filter * ppos
-            expected_l0 += ppos
-
-        return expected_flops.data[0], expected_l0.data[0]
+            expected_flops += self.out_features
+            expected_l0 += self.out_features
+        return expected_flops.item(), expected_l0.item()
 
     def get_eps(self, size): # NEW
         """Uniform random numbers for the concrete distribution"""
@@ -173,6 +168,7 @@ class L0ConjunctionLayer(nn.Module):
     def sample_weights(self): # NEW
         z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
+        self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
         return mask.view(self.in_features, 1) * self.weights
         
 
@@ -215,10 +211,12 @@ class L0DisjunctionLayer(nn.Module):
         self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
         self.qz_loga = Parameter(torch.Tensor(in_features)) # NEW
         self.temperature = temperature # NEW
-        self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
+        # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
+        self.droprate_init = droprate_init # NEW
         self.lamba = lamba # NEW
         self.use_bias = False # NEW
         self.local_rep = local_rep # NEW
+        self.mask_zero_weights = None # NEW
         if bias: # NEW
             self.bias = Parameter(torch.Tensor(out_features)) # NEW
             self.use_bias = True # NEW
@@ -282,25 +280,18 @@ class L0DisjunctionLayer(nn.Module):
     def regularization(self): # NEW
         return self._reg_w()
 
-    def count_expected_flops_and_l0(self): # NEW
+    def count_expected_flops_and_l0(self):
         """Measures the expected floating point operations (FLOPs) and the expected L0 norm"""
+        # dim_in multiplications and dim_in - 1 additions for each output neuron for the weights
+        # + the bias addition for each neuron
+        # total_flops = (2 * in_features - 1) * out_features + out_features
         ppos = torch.sum(1 - self.cdf_qz(0))
-        n = self.kernel_size[0] * self.kernel_size[1] * self.in_channels  # vector_length
-        flops_per_instance = n + (n - 1)  # (n: multiplications and n-1: additions)
-
-        num_instances_per_filter = ((self.input_shape[1] - self.kernel_size[0] + 2 * self.padding[0]) / self.stride[0]) + 1  # for rows
-        num_instances_per_filter *= ((self.input_shape[2] - self.kernel_size[1] + 2 * self.padding[1]) / self.stride[1]) + 1  # multiplying with cols
-
-        flops_per_filter = num_instances_per_filter * flops_per_instance
-        expected_flops = flops_per_filter * ppos  # multiply with number of filters
-        expected_l0 = n * ppos
-
+        expected_flops = (2 * ppos - 1) * self.out_features
+        expected_l0 = ppos * self.out_features
         if self.use_bias:
-            # since the gate is applied to the output we also reduce the bias computation
-            expected_flops += num_instances_per_filter * ppos
-            expected_l0 += ppos
-
-        return expected_flops.data[0], expected_l0.data[0]
+            expected_flops += self.out_features
+            expected_l0 += self.out_features
+        return expected_flops.item(), expected_l0.item()
 
     def get_eps(self, size): # NEW
         """Uniform random numbers for the concrete distribution"""
@@ -321,6 +312,7 @@ class L0DisjunctionLayer(nn.Module):
     def sample_weights(self): # NEW
         z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
+        self.mask_zero_weights  = torch.where(mask == 0, 1, 0).sum() * self.out_features
         return mask.view(self.in_features, 1) * self.weights
 
 
@@ -354,7 +346,7 @@ class L0MLLP(nn.Module):
     """
 
     def __init__(self, dim_list, device, use_not=False, log_file=None, N=50000, beta_ema=0.999,
-                 weight_decay=1, lamba=0.1, local_rep=False, temperature=2./3.): # UPDATED
+                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3.): # UPDATED
         """
 
         Parameters
@@ -391,9 +383,9 @@ class L0MLLP(nn.Module):
         self.disj = []
 
         for i in range(0, len(dim_list) - 2, 2):
-            conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], use_not=use_not, droprate_init=0.2 if i == 0 else 0.5, weight_decay=self.weight_decay,
+            conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
                                lamba=lamba, local_rep=local_rep, temperature=temperature)
-            disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], use_not=False, droprate_init=0.5, weight_decay=self.weight_decay,
+            disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], use_not=False, droprate_init=droprate_init, weight_decay=weight_decay,
                                lamba=lamba, local_rep=local_rep, temperature=temperature)
             self.add_module('conj{}'.format(i), conj)
             self.add_module('disj{}'.format(i), disj)
@@ -554,7 +546,19 @@ class L0MLLP(nn.Module):
                 total_loss = total_loss.to(self.device)
             return total_loss
 
-        for epo in tqdm(range(epoch)):
+        # Print weigths before training
+        total_weights = 0 # NEW
+        for k, layer in enumerate(self.layers):  # NEW
+            total_weights += layer.weights.size()[0] * layer.weights.size()[1]# NEW
+        print(f"Total weights: {total_weights}") # NEW
+
+        for epo in tqdm(range(epoch), desc="Epochs"):
+            # Print 0 weigths before optimizer step
+            total_zero_weights = 0 # NEW
+            for k, layer in enumerate(self.layers):  # NEW
+                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
+            print(f"Total 0 weights start: {total_zero_weights}") # NEW
+
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
                                               lr_decay_epoch=lr_decay_epoch)
             running_loss = 0.0
@@ -580,6 +584,18 @@ class L0MLLP(nn.Module):
                     self.update_ema() # NEW
 
                 self.clip()
+
+            # Print mask zero weights
+            total_mask_zero_weights = 0
+            for k, layer in enumerate(self.layers):  # NEW
+                total_mask_zero_weights += layer.mask_zero_weights # NEW
+            print(f"Total Mask 0 weights: {total_mask_zero_weights}")
+
+            # Print 0 weigths after optimizer step
+            total_zero_weights = 0
+            for k, layer in enumerate(self.layers):  # NEW
+                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
+            print(f"Total 0 weights end epoch: {total_zero_weights}")
 
             logging.info('epoch: {}, loss: {}'.format(epo, running_loss))
             loss_log.append(running_loss)

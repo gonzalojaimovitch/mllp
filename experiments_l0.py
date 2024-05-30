@@ -92,7 +92,15 @@ def experiment(args):
     net = L0MLLP(net_structure,
                device=device,
                use_not=args.use_not,
-               log_file=args.log)
+               log_file=args.log,
+               N=args.N,
+               beta_ema=args.beta_ema,
+               weight_decay=args.weight_decay,
+               lamba=args.lamba,
+               droprate_init_input=args.droprate_init_input,
+               droprate_init=args.droprate_init,
+               local_rep=args.local_rep,
+               temperature=args.temperature)
     net.to(device)
 
     loss_log, accuracy, accuracy_b, f1_score, f1_score_b = net.train(
@@ -134,20 +142,31 @@ if __name__ == '__main__':
     parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=0.75, help='Set the learning rate decay rate.')
     parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=100, help='Set the learning rate decay epoch.')
     parser.add_argument('-wd', '--weight_decay', type=float, default=0.0, help='Set the weight decay (L2 penalty).')
-    parser.add_argument('-p', '--random_binarization_rate', type=float, default=0.0,
-                        help='Set the rate of random binarization. It is important for CRS extractions from deep MLLPs.')
     parser.add_argument('--use_not', action="store_true",
                         help='Use the NOT (~) operator in logical rules. '
                              'It will enhance model capability but make the CRS more complex.')
     parser.add_argument('-s', '--structure', type=str, default='64',
                         help='Set the structure of network. Only the number of nodes in middle layers are needed. '
                              'E.g., 64, 64_32_16. The total number of middle layers should be odd.')
+    parser.add_argument('--lamba', type=float, default=0.1,
+                        help='L0 Lamba parameter')
+    parser.add_argument('--droprate_init_input', type=float, default=0.2,
+                        help='L0 droprate_init_input parameter')
+    parser.add_argument('--droprate_init', type=float, default=0.5,
+                        help='L0 droprate_init parameter')
+    parser.add_argument('-N', type=int, default=50000,
+                        help='L0 N parameter')
+    parser.add_argument('--beta_ema', type=float, default=0.999,
+                        help='L0 beta_ema parameter')
+    parser.add_argument('--local_rep', action="store_true",
+                        help='L0 local_rep parameter')
+    parser.add_argument('--temperature', type=float, default=2./3.,
+                        help='L0 temperature parameter')
 
     args = parser.parse_args()
-    args.folder_name = 'l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_lr{}_lrdr{}_lrde{}_wd{}_p{}_useNOT{}'.format(
+    args.folder_name = 'l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_lr{}_lrdr{}_lrde{}_wd{}_useNOT{}_lamba{}_droprate_init_input{}_droprate_init{}_N{}_beta_ema{}_local_rep{}_temperature{}'.format(
         args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size,
-        args.learning_rate, args.lr_decay_rate, args.lr_decay_epoch, args.weight_decay,
-        args.random_binarization_rate, args.use_not)
+        args.learning_rate, args.lr_decay_rate, args.lr_decay_epoch, args.weight_decay, args.use_not, args.lamba, args.droprate_init_input, args.droprate_init, args.N, args.beta_ema, args.local_rep, args.temperature)
 
     if not os.path.exists('log_folder'):
         os.mkdir('log_folder')
