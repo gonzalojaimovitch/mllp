@@ -270,7 +270,7 @@ class MLLP(nn.Module):
                                               lr_decay_epoch=lr_decay_epoch)
             running_loss = 0.0
             cnt = 0
-            for X, y in tqdm(data_loader):
+            for X, y in data_loader:
                 X = X.to(self.device)
                 y = y.to(self.device)
                 optimizer.zero_grad()  # Zero the gradient buffers.
@@ -325,7 +325,7 @@ class MLLP(nn.Module):
             # Test the model batch by batch.
             # Test the MLLP.
             y_pred_list = []
-            for X, in tqdm(test_loader):
+            for X, in test_loader:
                 y_pred_list.append(self.forward(X))
             y_pred = torch.cat(y_pred_list)
             y_pred = y_pred.cpu().numpy()

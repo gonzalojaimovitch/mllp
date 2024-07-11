@@ -130,14 +130,14 @@ def experiment(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--data_set', type=str, default='tic-tac-toe',
+    parser.add_argument('-d', '--data_set', type=str, default='connect-4',
                         help='Set the data set for training. All the data sets in the dataset folder are available.')
     parser.add_argument('-k', '--kfold', type=int, default=5, help='Set the k of K-Folds cross-validation.')
     parser.add_argument('-ki', '--ith_kfold', type=int, default=0, help='Do the i-th validation, 0 <= ki < k.')
     parser.add_argument('--use_validation_set', action="store_true",
-                        help='Use the validation set for parameters tuning.')
+                        help='Use the validation set for parameters tuning.', default=True)
     parser.add_argument('-e', '--epoch', type=int, default=401, help='Set the total epoch.')
-    parser.add_argument('-bs', '--batch_size', type=int, default=64, help='Set the batch size.')
+    parser.add_argument('-bs', '--batch_size', type=int, default=65, help='Set the batch size.')
     parser.add_argument('-lr', '--learning_rate', type=float, default=0.01, help='Set the initial learning rate.')
     parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=0.75, help='Set the learning rate decay rate.')
     parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=100, help='Set the learning rate decay epoch.')
@@ -145,12 +145,12 @@ if __name__ == '__main__':
     parser.add_argument('--use_not', action="store_true",
                         help='Use the NOT (~) operator in logical rules. '
                              'It will enhance model capability but make the CRS more complex.')
-    parser.add_argument('-s', '--structure', type=str, default='64',
+    parser.add_argument('-s', '--structure', type=str, default='256', # '64,
                         help='Set the structure of network. Only the number of nodes in middle layers are needed. '
                              'E.g., 64, 64_32_16. The total number of middle layers should be odd.')
-    parser.add_argument('--lamba', type=float, default=0.1,
+    parser.add_argument('--lamba', type=float, default=0.00001,#1,
                         help='L0 Lamba parameter')
-    parser.add_argument('--droprate_init_input', type=float, default=0.2,
+    parser.add_argument('--droprate_init_input', type=float, default=0.9,
                         help='L0 droprate_init_input parameter')
     parser.add_argument('--droprate_init', type=float, default=0.5,
                         help='L0 droprate_init parameter')
@@ -160,8 +160,12 @@ if __name__ == '__main__':
                         help='L0 beta_ema parameter')
     parser.add_argument('--local_rep', action="store_true",
                         help='L0 local_rep parameter')
-    parser.add_argument('--temperature', type=float, default=2./3.,
+    parser.add_argument('--temperature', type=float, default=2.0,
                         help='L0 temperature parameter')
+
+    # set seed
+    torch.manual_seed(0)
+    np.random.seed(0)
 
     args = parser.parse_args()
     args.folder_name = 'l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_lr{}_lrdr{}_lrde{}_wd{}_useNOT{}_lamba{}_droprate_init_input{}_droprate_init{}_N{}_beta_ema{}_local_rep{}_temperature{}'.format(

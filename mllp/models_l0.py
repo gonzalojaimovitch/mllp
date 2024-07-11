@@ -65,7 +65,7 @@ class L0ConjunctionLayer(nn.Module):
         self.prior_prec = weight_decay # NEW
         self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
         self.sampled_weights = None # NEW
-        self.qz_loga = Parameter(torch.Tensor(in_features)) # NEW
+        self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
         self.temperature = temperature # NEW
         # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
         self.droprate_init = droprate_init # NEW
@@ -102,6 +102,7 @@ class L0ConjunctionLayer(nn.Module):
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
             Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
+            # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return torch.prod((1 - (1 - x)[:, :, None] * Wb[None, :, :]), dim=1)
 
     def reset_parameters(self): # NEW
@@ -121,6 +122,10 @@ class L0ConjunctionLayer(nn.Module):
         logits = math.log(xn) - math.log(1 - xn)
         return F.sigmoid(logits * self.temperature - self.qz_loga).clamp(min=epsilon, max=1 - epsilon)
 
+    def one_minus_cdf_qz0(self):
+        # let's use what is described in the paper (it's more specific, while the above is more general)
+        return F.sigmoid(self.qz_loga - self.temperature * math.log(-limit_a / limit_b))
+
     def quantile_concrete(self, x): # NEW
         """Implements the quantile, aka inverse CDF, of the 'stretched' concrete distribution"""
         y = F.sigmoid((torch.log(x) - torch.log(1 - x) + self.qz_loga) / self.temperature)
@@ -128,13 +133,16 @@ class L0ConjunctionLayer(nn.Module):
 
     def _reg_w(self): # NEW
         """Expected L0 norm under the stochastic gates, takes into account and re-weights also a potential L2 penalty"""
-        logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
-        logpw = torch.sum((1 - self.cdf_qz(0)) * logpw_col)
-        logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
-        return logpw + logpb
+        # logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
+        # logpw_col = - (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba
+        # logpw = torch.sum((1 - self.cdf_qz(0))) #* logpw_col)
+        # logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
+        lc = torch.sum(self.one_minus_cdf_qz0())
+        return lc
+        # return logpw + logpb
 
     def regularization(self): # NEW
-        return self._reg_w()
+        return self._reg_w() * self.lamba
 
     def count_expected_flops_and_l0(self):
         """Measures the expected floating point operations (FLOPs) and the expected L0 norm"""
@@ -166,11 +174,11 @@ class L0ConjunctionLayer(nn.Module):
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
     def sample_weights(self): # NEW
-        z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features)))
+        z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
         self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
-        return mask.view(self.in_features, 1) * self.weights
-        
+        return mask.view(self.in_features, self.out_features) * self.weights
+
 
 
 class L0DisjunctionLayer(nn.Module):
@@ -209,7 +217,7 @@ class L0DisjunctionLayer(nn.Module):
         self.out_features = out_features # UPDATED
         self.prior_prec = weight_decay # NEW
         self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
-        self.qz_loga = Parameter(torch.Tensor(in_features)) # NEW
+        self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
         self.temperature = temperature # NEW
         # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
         self.droprate_init = droprate_init # NEW
@@ -225,7 +233,7 @@ class L0DisjunctionLayer(nn.Module):
 
     def forward(self, input): # UPDATED
         if self.use_not:
-            input= torch.cat((input, 1 - input), dim=1)
+            input = torch.cat((input, 1 - input), dim=1)
         if self.local_rep or not self.training: # NEW
             z = self.sample_z(input.size(0), sample=self.training) # NEW
             xin = input.mul(z) # NEW
@@ -246,6 +254,7 @@ class L0DisjunctionLayer(nn.Module):
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
             Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
+            # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return 1 - torch.prod(1 - x[:, :, None] * Wb[None, :, :], dim=1)
 
     def reset_parameters(self): # NEW
@@ -265,6 +274,11 @@ class L0DisjunctionLayer(nn.Module):
         logits = math.log(xn) - math.log(1 - xn)
         return F.sigmoid(logits * self.temperature - self.qz_loga).clamp(min=epsilon, max=1 - epsilon)
 
+    def one_minus_cdf_qz0(self):
+        # let's use what is described in the paper (it's more specific, while the above is more general)
+        # note: in the paper they call qz_loga -> logaj (better check to make sure i'm not misunderstanding)
+        return F.sigmoid(self.qz_loga - self.temperature * math.log(-limit_a / limit_b))
+
     def quantile_concrete(self, x): # NEW
         """Implements the quantile, aka inverse CDF, of the 'stretched' concrete distribution"""
         y = F.sigmoid((torch.log(x) - torch.log(1 - x) + self.qz_loga) / self.temperature)
@@ -272,13 +286,17 @@ class L0DisjunctionLayer(nn.Module):
 
     def _reg_w(self): # NEW
         """Expected L0 norm under the stochastic gates, takes into account and re-weights also a potential L2 penalty"""
-        logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
-        logpw = torch.sum((1 - self.cdf_qz(0)) * logpw_col)
-        logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
-        return logpw + logpb
+        # logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
+        # logpw_col = - (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba
+        #logpw = torch.sum((1 - self.cdf_qz(0))) #* logpw_col)
+        #logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
+        #return logpw + logpb
+        lc = torch.sum(self.one_minus_cdf_qz0())
+        return lc
+
 
     def regularization(self): # NEW
-        return self._reg_w()
+        return self._reg_w() * self.lamba
 
     def count_expected_flops_and_l0(self):
         """Measures the expected floating point operations (FLOPs) and the expected L0 norm"""
@@ -310,10 +328,10 @@ class L0DisjunctionLayer(nn.Module):
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
     def sample_weights(self): # NEW
-        z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features)))
+        z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
-        self.mask_zero_weights  = torch.where(mask == 0, 1, 0).sum() * self.out_features
-        return mask.view(self.in_features, 1) * self.weights
+        self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
+        return mask.view(self.in_features, self.out_features) * self.weights
 
 
 class L0MLLP(nn.Module):
@@ -384,9 +402,9 @@ class L0MLLP(nn.Module):
 
         for i in range(0, len(dim_list) - 2, 2):
             conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature)
+                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
             disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], use_not=False, droprate_init=droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature)
+                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
             self.add_module('conj{}'.format(i), conj)
             self.add_module('disj{}'.format(i), disj)
             self.conj.append(conj)
@@ -433,7 +451,7 @@ class L0MLLP(nn.Module):
     def regularization(self): # NEW
         regularization = 0.
         for layer in self.layers:
-            regularization += - (1. / self.N) * layer.regularization()
+            regularization += layer.regularization()
         if torch.cuda.is_available():
             regularization = regularization.cuda()
         return regularization
@@ -535,7 +553,7 @@ class L0MLLP(nn.Module):
 
         self.weight_decay = weight_decay # NEW
 
-        criterion = nn.MSELoss()
+        criterion = nn.BCELoss() #nn.MSELoss()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr) # UPDATED
 
         # define loss function (criterion) and optimizer
@@ -557,7 +575,7 @@ class L0MLLP(nn.Module):
             total_zero_weights = 0 # NEW
             for k, layer in enumerate(self.layers):  # NEW
                 total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
-            print(f"Total 0 weights start: {total_zero_weights}") # NEW
+            # print(f"Total 0 weights start: {total_zero_weights}") # NEW
 
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
                                               lr_decay_epoch=lr_decay_epoch)
@@ -576,7 +594,7 @@ class L0MLLP(nn.Module):
                         logging.debug('{}'.format(param.grad))
                     cnt += 1
                 optimizer.step()
-                
+
                 for k, layer in enumerate(self.layers):  # NEW
                     layer.constrain_parameters() # NEW
 
@@ -589,15 +607,16 @@ class L0MLLP(nn.Module):
             total_mask_zero_weights = 0
             for k, layer in enumerate(self.layers):  # NEW
                 total_mask_zero_weights += layer.mask_zero_weights # NEW
-            print(f"Total Mask 0 weights: {total_mask_zero_weights}")
+            # print(f"Total Mask 0 weights: {total_mask_zero_weights}")
 
             # Print 0 weigths after optimizer step
             total_zero_weights = 0
             for k, layer in enumerate(self.layers):  # NEW
                 total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
-            print(f"Total 0 weights end epoch: {total_zero_weights}")
+            # print(f"Total 0 weights end epoch: {total_zero_weights}")
 
-            logging.info('epoch: {}, loss: {}'.format(epo, running_loss))
+            logging.info('epoch: {}, loss: {}'.format(epo, running_loss  / len(data_loader)))
+            print('epoch: {}, loss: {}'.format(epo, running_loss / len(data_loader)))
             loss_log.append(running_loss)
             # Change the set of weights to be binarized every epoch.
 
