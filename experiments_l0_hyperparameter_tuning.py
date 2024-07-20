@@ -63,7 +63,7 @@ def plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b):
 def experiment(args, data_path, info_path):
     args = argparse.Namespace(**args) # included to convert back the dict required for the tuner to the args object
 
-    wandb = setup_wandb(vars(args), rank_zero_only=False, project='l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_useNOT{}_N{}_local_rep{}_group_l0{}'.format(args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size, args.use_not, args.N, args.local_rep, args.group_l0))
+    wandb = setup_wandb(vars(args), rank_zero_only=False, entity='mllp_l0', project='l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_useNOT{}_N{}_local_rep{}_group_l0{}'.format(args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size, args.use_not, args.N, args.local_rep, args.group_l0))
 
     # Create temp dir
     tempdirname = tempfile.TemporaryDirectory().name
