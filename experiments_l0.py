@@ -53,9 +53,9 @@ def plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b):
 
     plt.savefig(args.plot_file)
 
-
 def experiment(args):
     dataset = args.data_set
+
     data_path = os.path.join(DATA_DIR, dataset + '.data')
     info_path = os.path.join(DATA_DIR, dataset + '.info')
     X_df, y_df, f_df, label_pos = read_csv(data_path, info_path, shuffle=True)

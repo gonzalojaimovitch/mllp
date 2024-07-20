@@ -55,7 +55,7 @@ class L0ConjunctionLayer(nn.Module):
     - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
     """
 
-    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=0.1, local_rep=False, **kwargs): # UPDATED
+    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=0.1, local_rep=False, group_l0= False, **kwargs): # UPDATED
         super(L0ConjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
@@ -65,7 +65,11 @@ class L0ConjunctionLayer(nn.Module):
         self.prior_prec = weight_decay # NEW
         self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
         self.sampled_weights = None # NEW
-        self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
+        self.group_l0 = group_l0 # NEW
+        if self.group_l0:
+            self.qz_loga = Parameter(torch.Tensor(in_features)) # NEW
+        else:
+            self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
         self.temperature = temperature # NEW
         # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
         self.droprate_init = droprate_init # NEW
@@ -133,16 +137,20 @@ class L0ConjunctionLayer(nn.Module):
 
     def _reg_w(self): # NEW
         """Expected L0 norm under the stochastic gates, takes into account and re-weights also a potential L2 penalty"""
-        # logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
-        # logpw_col = - (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba
-        # logpw = torch.sum((1 - self.cdf_qz(0))) #* logpw_col)
-        # logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
-        lc = torch.sum(self.one_minus_cdf_qz0())
-        return lc
-        # return logpw + logpb
+        if self.group_l0:
+            logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
+            logpw = torch.sum((1 - self.cdf_qz(0)) * logpw_col)
+            logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
+            return logpw + logpb
+        else:
+            lc = torch.sum(self.one_minus_cdf_qz0())
+            return lc
 
     def regularization(self): # NEW
-        return self._reg_w() * self.lamba
+        if self.group_l0:
+            return self._reg_w()
+        else:
+            return self._reg_w() * self.lamba
 
     def count_expected_flops_and_l0(self):
         """Measures the expected floating point operations (FLOPs) and the expected L0 norm"""
@@ -174,10 +182,17 @@ class L0ConjunctionLayer(nn.Module):
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
     def sample_weights(self): # NEW
-        z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
+        if self.group_l0:
+            z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features)))
+        else:
+            z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
         self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
-        return mask.view(self.in_features, self.out_features) * self.weights
+        
+        if self.group_l0:
+            return mask.view(self.in_features, 1) * self.weights
+        else:
+            return mask.view(self.in_features, self.out_features) * self.weights
 
 
 
@@ -208,7 +223,7 @@ class L0DisjunctionLayer(nn.Module):
     reset_parameters
     - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
     """
-    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=1., local_rep=False, **kwargs): # UPDATED
+    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=1., local_rep=False, group_l0=False, **kwargs): # UPDATED
         super(L0DisjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
@@ -217,7 +232,11 @@ class L0DisjunctionLayer(nn.Module):
         self.out_features = out_features # UPDATED
         self.prior_prec = weight_decay # NEW
         self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
-        self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
+        self.group_l0 = group_l0
+        if self.group_l0:
+            self.qz_loga = Parameter(torch.Tensor(in_features)) # NEW
+        else:
+            self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
         self.temperature = temperature # NEW
         # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
         self.droprate_init = droprate_init # NEW
@@ -286,17 +305,20 @@ class L0DisjunctionLayer(nn.Module):
 
     def _reg_w(self): # NEW
         """Expected L0 norm under the stochastic gates, takes into account and re-weights also a potential L2 penalty"""
-        # logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
-        # logpw_col = - (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba
-        #logpw = torch.sum((1 - self.cdf_qz(0))) #* logpw_col)
-        #logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
-        #return logpw + logpb
-        lc = torch.sum(self.one_minus_cdf_qz0())
-        return lc
-
+        if self.group_l0:
+            logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
+            logpw = torch.sum((1 - self.cdf_qz(0)) * logpw_col)
+            logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
+            return logpw + logpb
+        else:
+            lc = torch.sum(self.one_minus_cdf_qz0())
+            return lc
 
     def regularization(self): # NEW
-        return self._reg_w() * self.lamba
+        if self.group_l0:
+            return self._reg_w()
+        else:
+            return self._reg_w() * self.lamba
 
     def count_expected_flops_and_l0(self):
         """Measures the expected floating point operations (FLOPs) and the expected L0 norm"""
@@ -328,10 +350,17 @@ class L0DisjunctionLayer(nn.Module):
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
     def sample_weights(self): # NEW
-        z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
+        if self.group_l0:
+            z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features)))
+        else:
+            z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
         self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
-        return mask.view(self.in_features, self.out_features) * self.weights
+        
+        if self.group_l0:
+            return mask.view(self.in_features, 1) * self.weights
+        else:
+            return mask.view(self.in_features, self.out_features) * self.weights
 
 
 class L0MLLP(nn.Module):
@@ -364,7 +393,7 @@ class L0MLLP(nn.Module):
     """
 
     def __init__(self, dim_list, device, use_not=False, log_file=None, N=50000, beta_ema=0.999,
-                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3.): # UPDATED
+                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3., group_l0=False): # UPDATED
         """
 
         Parameters
@@ -396,15 +425,16 @@ class L0MLLP(nn.Module):
         self.dim_list = dim_list
         self.device = device
         self.use_not = use_not
+        self.group_l0 = group_l0
         self.enc = None
         self.conj = []
         self.disj = []
 
         for i in range(0, len(dim_list) - 2, 2):
             conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
+                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False, group_l0=group_l0)
             disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], use_not=False, droprate_init=droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
+                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False, group_l0=group_l0)
             self.add_module('conj{}'.format(i), conj)
             self.add_module('disj{}'.format(i), disj)
             self.conj.append(conj)
@@ -451,7 +481,10 @@ class L0MLLP(nn.Module):
     def regularization(self): # NEW
         regularization = 0.
         for layer in self.layers:
-            regularization += layer.regularization()
+            if self.group_l0:
+                regularization += - (1. / self.N) * layer.regularization()
+            else:
+                regularization += layer.regularization()
         if torch.cuda.is_available():
             regularization = regularization.cuda()
         return regularization
@@ -553,7 +586,8 @@ class L0MLLP(nn.Module):
 
         self.weight_decay = weight_decay # NEW
 
-        criterion = nn.BCELoss() #nn.MSELoss()
+        # criterion = nn.BCELoss()
+        criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr) # UPDATED
 
         # define loss function (criterion) and optimizer
