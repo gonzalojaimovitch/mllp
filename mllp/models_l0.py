@@ -583,6 +583,10 @@ class L0MLLP(nn.Module):
         accuracy_b = []
         f1_score = []
         f1_score_b = []
+        accuracy_v = [] if X_validation is not None and y_validation is not None else None
+        accuracy_v_b = [] if X_validation is not None and y_validation is not None else None
+        f1_score_v = [] if X_validation is not None and y_validation is not None else None
+        f1_score_v_b = [] if X_validation is not None and y_validation is not None else None
 
         self.weight_decay = weight_decay # NEW
 
@@ -657,11 +661,12 @@ class L0MLLP(nn.Module):
             # Test the validation set or training set every 5 epochs.
             if epo % 5 == 0:
                 if X_validation is not None and y_validation is not None:
-                    acc, acc_b, f1, f1_b = self.test(X_validation, y_validation, False)
+                    acc_v, acc_v_b, f1_v, f1_v_b = self.test(X_validation, y_validation, False)
                     set_name = 'Validation'
                 else:
-                    acc, acc_b, f1, f1_b = self.test(X, y, False)
-                    set_name = 'Training'
+                    acc_v, acc_v_b, f1_v, f1_v_b = None
+                acc, acc_b, f1, f1_b = self.test(X, y, False)
+                set_name = 'Training'
                 logging.info('-' * 60)
                 logging.info('On {} Set:\n\tAccuracy of MLLP Model: {}'
                              '\n\tAccuracy of CRS  Model: {}'.format(set_name, acc, acc_b))
@@ -672,7 +677,12 @@ class L0MLLP(nn.Module):
                 accuracy_b.append(acc_b)
                 f1_score.append(f1)
                 f1_score_b.append(f1_b)
-        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b
+                if X_validation is not None and y_validation is not None:
+                    accuracy_v.append(acc_v)
+                    accuracy_v_b.append(acc_v_b)
+                    f1_score_v.append(f1_v)
+                    f1_score_v_b.append(f1_v_b)
+        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b
 
     def test(self, X, y, need_transform=True):
         if need_transform:

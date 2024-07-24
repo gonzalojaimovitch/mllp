@@ -103,7 +103,7 @@ def experiment(args):
                temperature=args.temperature)
     net.to(device)
 
-    loss_log, accuracy, accuracy_b, f1_score, f1_score_b = net.train(
+    loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b = net.train(
         X_train,
         y_train,
         X_validation=X_validation,

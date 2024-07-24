@@ -6,6 +6,9 @@ import logging
 from functools import partial
 import numpy as np
 import torch
+import time
+
+import statistics
 
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
@@ -61,9 +64,11 @@ def plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b):
     plt.savefig(args.plot_file)
   
 def experiment(args, data_path, info_path):
+    start = time.time()
+
     args = argparse.Namespace(**args) # included to convert back the dict required for the tuner to the args object
 
-    wandb = setup_wandb(vars(args), rank_zero_only=False, entity='mllp_l0', project='l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_useNOT{}_N{}_local_rep{}_group_l0{}'.format(args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size, args.use_not, args.N, args.local_rep, args.group_l0))
+    wandb = setup_wandb(vars(args), rank_zero_only=False, entity='mllp_l0', project=args.project_name)
 
     # Create temp dir
     tempdirname = tempfile.TemporaryDirectory().name
@@ -80,11 +85,13 @@ def experiment(args, data_path, info_path):
     args.folder_path = os.path.join(tempdirname, 'log_folder', args.folder_name)
     if not os.path.exists(args.folder_path):
         os.makedirs(args.folder_path)
-    args.model = os.path.join(args.folder_path, 'model.pth')
-    args.crs_file = os.path.join(args.folder_path, 'crs.txt')
-    args.plot_file = os.path.join(args.folder_path, 'plot_file.pdf')
+    # args.model = os.path.join(args.folder_path, 'model.pth')
+    # args.crs_file = os.path.join(args.folder_path, 'crs.txt')
+    # args.plot_file = os.path.join(args.folder_path, 'plot_file.pdf')
     args.log = os.path.join(args.folder_path, 'log.txt')
+
     logging.basicConfig(level=logging.INFO, filename=args.log, filemode='w', format='[%(levelname)s] - %(message)s')
+    
 
     # dataset = args.data_set
 
@@ -94,100 +101,164 @@ def experiment(args, data_path, info_path):
     X_df, y_df, f_df, label_pos = read_csv(data_path, info_path, shuffle=True)
 
     kf = KFold(n_splits=args.kfold, shuffle=True, random_state=0)
-    train_index, test_index = list(kf.split(X_df))[args.ith_kfold]
-    X_train_df = X_df.iloc[train_index]
-    y_train_df = y_df.iloc[train_index]
-    X_test_df = X_df.iloc[test_index]
-    y_test_df = y_df.iloc[test_index]
 
-    logging.info('Discretizing and binarizing data. Please wait ...')
-    db_enc = DBEncoder(f_df, discrete=True)
-    db_enc.fit(X_df, y_df)
-    X_fname = db_enc.X_fname
-    y_fname = db_enc.y_fname
-    X_train, y_train = db_enc.transform(X_train_df, y_train_df)
-    X_test, y_test = db_enc.transform(X_test_df, y_test_df)
-    logging.info('Data discretization and binarization are done.')
+    loss_ikf = []
+    accuracy_ikf = []
+    accuracy_b_ikf = []
+    f1_score_ikf = []
+    f1_score_b_ikf = []
+    accuracy_v_ikf = []
+    accuracy_v_b_ikf = []
+    f1_score_v_ikf = []
+    f1_score_v_b_ikf = []
+    test_accuracy_ikf = []
+    test_accuracy_b_ikf = []
+    test_f1_score_ikf = []
+    test_f1_score_b_ikf = []
 
-    if args.use_validation_set:
-        # Use 20% of the training set as the validation set.
-        # kf = KFold(n_splits=5, shuffle=True, random_state=0) # In the original implementation this is hard-coded and could be missaligned with the above kfold split?
-        kf = KFold(n_splits=args.kfold, shuffle=True, random_state=0)
-        train_index, validation_index = next(kf.split(X_train))
-        X_validation = X_train[validation_index]
-        y_validation = y_train[validation_index]
-        X_train = X_train[train_index]
-        y_train = y_train[train_index]
-    else:
-        X_validation = None
-        y_validation = None
+    for ikf in range(args.kfold):
+        # Define ikf file names
+        args.model = os.path.join(args.folder_path, 'model_{ikf}.pth'.format(ikf=ikf))
+        args.crs_file = os.path.join(args.folder_path, 'crs_{ikf}.txt'.format(ikf=ikf))
+        args.plot_file = os.path.join(args.folder_path, 'plot_file_{ikf}.pdf'.format(ikf=ikf))
+        # args.log = os.path.join(args.folder_path, 'log_{ikf}.txt')
 
-    net_structure = [len(X_fname)] + list(map(int, args.structure.split('_'))) + [len(y_fname)]
-    net = L0MLLP(net_structure,
-               device=device,
-               use_not=args.use_not,
-               log_file=None,
-               N=args.N if args.N is not None else len(X_train_df),
-               beta_ema=args.beta_ema,
-               weight_decay=args.weight_decay,
-               lamba=args.lamba,
-               droprate_init_input=args.droprate_init_input,
-               droprate_init=args.droprate_init,
-               local_rep=args.local_rep,
-               temperature=args.temperature,
-               group_l0=args.group_l0)
-    net.to(device)
+        # logging.basicConfig(level=logging.INFO, filename=args.log, filemode='w', format='[%(levelname)s] - %(message)s')
 
-    loss_log, accuracy, accuracy_b, f1_score, f1_score_b = net.train(
-        X_train,
-        y_train,
-        X_validation=X_validation,
-        y_validation=y_validation,
-        lr=args.learning_rate,
-        batch_size=args.batch_size,
-        epoch=args.epoch,
-        lr_decay_rate=args.lr_decay_rate,
-        lr_decay_epoch=args.lr_decay_epoch,
-        weight_decay=args.weight_decay)
+        train_index, test_index = list(kf.split(X_df))[ikf]
 
-    plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b)
+        X_train_df = X_df.iloc[train_index]
+        y_train_df = y_df.iloc[train_index]
+        X_test_df = X_df.iloc[test_index]
+        y_test_df = y_df.iloc[test_index]
 
-    acc, acc_b, f1, f1_b = net.test(X_test, y_test, need_transform=True)
-    logging.info('=' * 60)
-    logging.info('Test:\n\tAccuracy of MLLP Model: {}\n\tAccuracy of CRS  Model: {}'.format(acc, acc_b))
-    logging.info('Test:\n\tF1 Score of MLLP Model: {}\n\tF1 Score of CRS  Model: {}'.format(f1, f1_b))
-    logging.info('=' * 60)
+        logging.info('Discretizing and binarizing data. Please wait ...')
+        db_enc = DBEncoder(f_df, discrete=True)
+        db_enc.fit(X_df, y_df)
+        X_fname = db_enc.X_fname
+        y_fname = db_enc.y_fname
+        X_train, y_train = db_enc.transform(X_train_df, y_train_df)
+        X_test, y_test = db_enc.transform(X_test_df, y_test_df)
+        logging.info('Data discretization and binarization are done.')
 
-    with open(args.crs_file, 'w') as f:
-        net.concept_rule_set_print(X_train, X_fname, y_fname, f)
-    torch.save(net.state_dict(), args.model)
+        if args.use_validation_set:
+            # Use 20% of the training set as the validation set.
+            # kf = KFold(n_splits=5, shuffle=True, random_state=0) # In the original implementation this is hard-coded and could be missaligned with the above kfold split?
+            kf = KFold(n_splits=args.kfold, shuffle=True, random_state=0)
+            train_index, validation_index = next(kf.split(X_train))
+            X_validation = X_train[validation_index]
+            y_validation = y_train[validation_index]
+            X_train = X_train[train_index]
+            y_train = y_train[train_index]
+        else:
+            X_validation = None
+            y_validation = None
 
-    # Send the logs to Tune (and it will upload them to Wandb)
-    for i in range(0, args.epoch - 1):
+        net_structure = [len(X_fname)] + list(map(int, args.structure.split('_'))) + [len(y_fname)]
+        net = L0MLLP(net_structure,
+                device=device,
+                use_not=args.use_not,
+                log_file=None,
+                N=args.N if args.N is not None else len(X_train_df),
+                beta_ema=args.beta_ema,
+                weight_decay=args.weight_decay,
+                lamba=args.lamba,
+                droprate_init_input=args.droprate_init_input,
+                droprate_init=args.droprate_init,
+                local_rep=args.local_rep,
+                temperature=args.temperature,
+                group_l0=args.group_l0)
+        net.to(device)
+
+        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b = net.train(
+            X_train,
+            y_train,
+            X_validation=X_validation,
+            y_validation=y_validation,
+            lr=args.learning_rate,
+            batch_size=args.batch_size,
+            epoch=args.epoch,
+            lr_decay_rate=args.lr_decay_rate,
+            lr_decay_epoch=args.lr_decay_epoch,
+            weight_decay=args.weight_decay)
+        loss_ikf.append(loss_log)
+        accuracy_ikf.append(accuracy)
+        accuracy_b_ikf.append(accuracy_b)
+        f1_score_ikf.append(f1_score)
+        f1_score_b_ikf.append(f1_score_b)
+        accuracy_v_ikf.append(accuracy_v)
+        accuracy_v_b_ikf.append(accuracy_v_b)
+        f1_score_v_ikf.append(f1_score_v)
+        f1_score_v_b_ikf.append(f1_score_v_b)
+
+        plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b)
+
+        acc, acc_b, f1, f1_b = net.test(X_test, y_test, need_transform=True)
+        logging.info('=' * 60)
+        logging.info('Test:\n\tAccuracy of MLLP Model: {}\n\tAccuracy of CRS  Model: {}'.format(acc, acc_b))
+        logging.info('Test:\n\tF1 Score of MLLP Model: {}\n\tF1 Score of CRS  Model: {}'.format(f1, f1_b))
+        logging.info('=' * 60)
+
+        test_accuracy_ikf.append(acc)
+        test_accuracy_b_ikf.append(acc_b)
+        test_f1_score_ikf.append(f1)
+        test_f1_score_b_ikf.append(f1_b)
+
+        with open(args.crs_file, 'w') as f:
+            net.concept_rule_set_print(X_train, X_fname, y_fname, f)
+        torch.save(net.state_dict(), args.model)
+
+    end = time.time()
+    logging.info(f"Total execution time: {end - start} seconds.")
+
+    # Send the logs to Tune and Wandb
+    for i in range(0, args.epoch):
         report_dict = {"epoch": i}
-        report_dict.update({"loss": loss_log[i]})
+        report_dict.update({"loss_avg": statistics.mean([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"loss_sd": statistics.stdev([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
         if i % 5 == 0:
-            report_dict.update({"train_accuracy": accuracy[int(i / 5)], "train_accuracy_b": accuracy_b[int(i / 5)], "train_f1_score": f1_score[int(i / 5)], "train_f1_score_b": f1_score_b[int(i / 5)]})
+            report_dict.update({"train_accuracy_kf_avg": statistics.mean([accuracy_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                "train_accuracy_b_kf_avg": statistics.mean([accuracy_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                "train_f1_score_kf_avg": statistics.mean([f1_score_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                "train_f1_score_b_kf_avg": statistics.mean([f1_score_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)])})
+            report_dict.update({"train_accuracy_kf_sd": statistics.stdev([accuracy_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                "train_accuracy_b_kf_sd": statistics.stdev([accuracy_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                "train_f1_score_kf_sd": statistics.stdev([f1_score_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                "train_f1_score_b_kf_sd": statistics.stdev([f1_score_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)])})
+            if args.use_validation_set:
+                report_dict.update({"val_accuracy_kf_avg": statistics.mean([accuracy_v_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                    "val_accuracy_b_kf_avg": statistics.mean([accuracy_v_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                    "val_f1_score_kf_avg": statistics.mean([f1_score_v_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                    "val_f1_score_b_kf_avg": statistics.mean([f1_score_v_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)])})
+                report_dict.update({"val_accuracy_kf_sd": statistics.stdev([accuracy_v_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                    "val_accuracy_b_kf_sd": statistics.stdev([accuracy_v_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                    "val_f1_score_kf_sd": statistics.stdev([f1_score_v_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
+                                    "val_f1_score_b_kf_sd": statistics.stdev([f1_score_v_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)])})
+        if i == args.epoch - 1:
+            report_dict.update({"test_accuracy_avg": statistics.mean(test_accuracy_ikf), 
+                                "test_accuracy_b_avg": statistics.mean(test_accuracy_b_ikf), 
+                                "test_f1_score_avg": statistics.mean(test_f1_score_ikf), 
+                                "test_f1_score_b_avg": statistics.mean(test_f1_score_b_ikf)})
+            report_dict.update({"test_accuracy_avg": statistics.stdev(test_accuracy_ikf), 
+                                "test_accuracy_b_avg": statistics.stdev(test_accuracy_b_ikf), 
+                                "test_f1_score_sd": statistics.stdev(test_f1_score_ikf), 
+                                "test_f1_score_b_sd": statistics.stdev(test_f1_score_b_ikf)})
+
         wandb.log(report_dict)
         train.report(report_dict)
-    report_dict = {"epoch": args.epoch - 1}
-    report_dict.update({"loss": loss_log[args.epoch - 1]})
-    if (args.epoch - 1) % 5 == 0:
-        report_dict.update({"train_accuracy": accuracy[args.epoch - 1], "train_accuracy_b": accuracy_b[args.epoch - 1], "train_f1_score": f1_score[args.epoch - 1], "train_f1_score_b": f1_score_b[args.epoch - 1]})
-    report_dict.update({"test_accuracy": acc, "test_accuracy_b": acc_b, "test_f1_score": f1, "test_f1_score_b": f1_b})
-    wandb.log(report_dict)
     wandb.log_artifact(args.folder_path)
     wandb.finish()
-    train.report(report_dict)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # Arguments that will be passed or defaulted
+    parser.add_argument('-p', '--project_name', type=str,
+                        help='Name of the Wandb project')
     parser.add_argument('-d', '--data_set', type=str, default='connect-4',
                         help='Set the data set for training. All the data sets in the dataset folder are available.')
     parser.add_argument('-k', '--kfold', type=int, default=5, help='Set the k of K-Folds cross-validation.')
-    parser.add_argument('-ki', '--ith_kfold', type=int, default=0, help='Do the i-th validation, 0 <= ki < k.')
+    # parser.add_argument('-ki', '--ith_kfold', type=int, default=0, help='Do the i-th validation, 0 <= ki < k.')
     parser.add_argument('--use_validation_set', action="store_true",
                         help='Use the validation set for parameters tuning.', default=True)
     parser.add_argument('-e', '--epoch', type=int, default=401, help='Set the total epoch.')
@@ -232,9 +303,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = {
+        "project_name": args.project_name,
         "data_set": args.data_set,
         "kfold": args.kfold,
-        "ith_kfold": args.ith_kfold,
+        # "ith_kfold": args.ith_kfold,
         "use_validation_set": args.use_validation_set,
         "epoch": args.epoch,
         "batch_size": args.batch_size,
