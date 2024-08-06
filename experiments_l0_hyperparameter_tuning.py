@@ -7,6 +7,7 @@ from functools import partial
 import numpy as np
 import torch
 import time
+import secrets
 
 import statistics
 
@@ -64,11 +65,10 @@ def plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b):
     plt.savefig(args.plot_file)
   
 def experiment(args, data_path, info_path):
-    start = time.time()
 
     args = argparse.Namespace(**args) # included to convert back the dict required for the tuner to the args object
 
-    wandb = setup_wandb(vars(args), rank_zero_only=False, entity='mllp_l0', project=args.project_name)
+    wandb = setup_wandb(vars(args), rank_zero_only=False, entity='mllp_l0', project=args.project_name, name=f"experiment_{secrets.token_hex(3)}" if not args.hyperparameter_tuning else None)
 
     # Create temp dir
     tempdirname = tempfile.TemporaryDirectory().name
@@ -115,8 +115,13 @@ def experiment(args, data_path, info_path):
     test_accuracy_b_ikf = []
     test_f1_score_ikf = []
     test_f1_score_b_ikf = []
+    total_mask_zero_weights_list_ikf = []
+    total_zero_weights_list_ikf = []
+    k_run_time = []
 
     for ikf in range(args.kfold):
+        start = time.time()
+
         # Define ikf file names
         args.model = os.path.join(args.folder_path, 'model_{ikf}.pth'.format(ikf=ikf))
         args.crs_file = os.path.join(args.folder_path, 'crs_{ikf}.txt'.format(ikf=ikf))
@@ -170,7 +175,7 @@ def experiment(args, data_path, info_path):
                 group_l0=args.group_l0)
         net.to(device)
 
-        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b = net.train(
+        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_zero_weights_list, total_zero_weights_list = net.train(
             X_train,
             y_train,
             X_validation=X_validation,
@@ -190,6 +195,8 @@ def experiment(args, data_path, info_path):
         accuracy_v_b_ikf.append(accuracy_v_b)
         f1_score_v_ikf.append(f1_score_v)
         f1_score_v_b_ikf.append(f1_score_v_b)
+        total_mask_zero_weights_list_ikf.append(total_mask_zero_weights_list)
+        total_zero_weights_list_ikf.append(total_zero_weights_list)
 
         plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b)
 
@@ -208,14 +215,21 @@ def experiment(args, data_path, info_path):
             net.concept_rule_set_print(X_train, X_fname, y_fname, f)
         torch.save(net.state_dict(), args.model)
 
-    end = time.time()
-    logging.info(f"Total execution time: {end - start} seconds.")
+        end = time.time()
+
+        k_run_time.append(end - start)
+    
+        logging.info(f"Total execution time: {end - start} seconds.")
 
     # Send the logs to Tune and Wandb
     for i in range(0, args.epoch):
         report_dict = {"epoch": i}
         report_dict.update({"loss_avg": statistics.mean([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"loss_sd": statistics.stdev([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_zero_weights_avg": statistics.mean([total_mask_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_zero_weights_sd": statistics.stdev([total_mask_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_zero_weights_avg": statistics.mean([total_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_zero_weights_sd": statistics.stdev([total_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         if i % 5 == 0:
             report_dict.update({"train_accuracy_kf_avg": statistics.mean([accuracy_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
                                 "train_accuracy_b_kf_avg": statistics.mean([accuracy_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
@@ -235,17 +249,21 @@ def experiment(args, data_path, info_path):
                                     "val_f1_score_kf_sd": statistics.stdev([f1_score_v_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
                                     "val_f1_score_b_kf_sd": statistics.stdev([f1_score_v_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)])})
         if i == args.epoch - 1:
-            report_dict.update({"test_accuracy_avg": statistics.mean(test_accuracy_ikf), 
-                                "test_accuracy_b_avg": statistics.mean(test_accuracy_b_ikf), 
-                                "test_f1_score_avg": statistics.mean(test_f1_score_ikf), 
-                                "test_f1_score_b_avg": statistics.mean(test_f1_score_b_ikf)})
-            report_dict.update({"test_accuracy_avg": statistics.stdev(test_accuracy_ikf), 
-                                "test_accuracy_b_avg": statistics.stdev(test_accuracy_b_ikf), 
-                                "test_f1_score_sd": statistics.stdev(test_f1_score_ikf), 
-                                "test_f1_score_b_sd": statistics.stdev(test_f1_score_b_ikf)})
+            report_dict.update({"test_accuracy_kf_avg": statistics.mean(test_accuracy_ikf), 
+                                "test_accuracy_b_kf_avg": statistics.mean(test_accuracy_b_ikf), 
+                                "test_f1_score_kf_avg": statistics.mean(test_f1_score_ikf), 
+                                "test_f1_score_b_kf_avg": statistics.mean(test_f1_score_b_ikf)})
+            report_dict.update({"test_accuracy_kf_sd": statistics.stdev(test_accuracy_ikf), 
+                                "test_accuracy_b_kf_sd": statistics.stdev(test_accuracy_b_ikf), 
+                                "test_f1_score_kf_sd": statistics.stdev(test_f1_score_ikf), 
+                                "test_f1_score_b_kf_sd": statistics.stdev(test_f1_score_b_ikf)})
+            report_dict.update({"run_time_kf_avg": statistics.mean(k_run_time)})
+            report_dict.update({"run_time_kf_sd": statistics.stdev(k_run_time)})
 
         wandb.log(report_dict)
-        train.report(report_dict)
+        if args.hyperparameter_tuning:
+            train.report(report_dict)
+
     wandb.log_artifact(args.folder_path)
     wandb.finish()
 
@@ -255,6 +273,8 @@ if __name__ == '__main__':
     # Arguments that will be passed or defaulted
     parser.add_argument('-p', '--project_name', type=str,
                         help='Name of the Wandb project')
+    parser.add_argument('-ht', '--hyperparameter_tuning',action="store_true",
+                        help='Whether a hyperparameter tuning will be or not performed')
     parser.add_argument('-d', '--data_set', type=str, default='connect-4',
                         help='Set the data set for training. All the data sets in the dataset folder are available.')
     parser.add_argument('-k', '--kfold', type=int, default=5, help='Set the k of K-Folds cross-validation.')
@@ -263,7 +283,7 @@ if __name__ == '__main__':
                         help='Use the validation set for parameters tuning.', default=True)
     parser.add_argument('-e', '--epoch', type=int, default=401, help='Set the total epoch.')
     parser.add_argument('-bs', '--batch_size', type=int, default=64, help='Set the batch size.')
-    parser.add_argument('-ns', '--num_samples', type=int, help='Number of samples for the hyperparameter tuning search')
+    parser.add_argument('-ns', '--num_samples', type=int, default=1, help='Number of samples for the hyperparameter tuning search')
     parser.add_argument('-N', type=int, default=None,
                         help='L0 N parameter')
     parser.add_argument('--use_not', action="store_true",
@@ -275,21 +295,21 @@ if __name__ == '__main__':
                         help='L0 group_l0 parameter')
 
     # Arguments that will be passed or set up by the tuner
-    parser.add_argument('-lr', '--learning_rate', type=float, default=None, help='Set the initial learning rate.')
-    parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=None, help='Set the learning rate decay rate.')
-    parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=None, help='Set the learning rate decay epoch.')
-    parser.add_argument('-wd', '--weight_decay', type=float, default=None, help='Set the weight decay (L2 penalty).')
-    parser.add_argument('--lamba', type=float, default=None,#1,
+    parser.add_argument('-lr', '--learning_rate', type=float, default=0.05, help='Set the initial learning rate.')
+    parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=0.75, help='Set the learning rate decay rate.')
+    parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=100, help='Set the learning rate decay epoch.')
+    parser.add_argument('-wd', '--weight_decay', type=float, default=10e-8, help='Set the weight decay (L2 penalty).')
+    parser.add_argument('--lamba', type=float, default=1.0,#1,
                         help='L0 Lamba parameter')
-    parser.add_argument('--droprate_init_input', type=float, default=None,
+    parser.add_argument('--droprate_init_input', type=float, default=0.2,
                         help='L0 droprate_init_input parameter')
-    parser.add_argument('--droprate_init', type=float, default=None,
+    parser.add_argument('--droprate_init', type=float, default=0.5,
                         help='L0 droprate_init parameter')
-    parser.add_argument('--beta_ema', type=float, default=None,
+    parser.add_argument('--beta_ema', type=float, default=0.999,
                         help='L0 beta_ema parameter')
-    parser.add_argument('--temperature', type=float, default=None,
+    parser.add_argument('--temperature', type=float, default=2./3.,
                         help='L0 temperature parameter')
-    parser.add_argument('-s', '--structure', type=str, default=None, # '64,
+    parser.add_argument('-s', '--structure', type=str, default='64', # '64,
                         help='Set the structure of network. Only the number of nodes in middle layers are needed. '
                              'E.g., 64, 64_32_16. The total number of middle layers should be odd.')
 
@@ -298,12 +318,13 @@ if __name__ == '__main__':
 
     # set seed
     torch.manual_seed(0)
-    np.random.seed(0)
+    # np.random.seed(0)
     
     args = parser.parse_args()
 
     config = {
         "project_name": args.project_name,
+        "hyperparameter_tuning": args.hyperparameter_tuning,
         "data_set": args.data_set,
         "kfold": args.kfold,
         # "ith_kfold": args.ith_kfold,
@@ -311,35 +332,41 @@ if __name__ == '__main__':
         "epoch": args.epoch,
         "batch_size": args.batch_size,
         "num_samples": args.num_samples,
-        "structure": args.structure if args.structure is not None else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"]),
+        "structure": args.structure if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"]),
         "N": args.N,
         "use_not": args.use_not,
-        "learning_rate": args.learning_rate if args.learning_rate is not None else tune.qloguniform(1e-4, 1e-1, 5e-5),
-        "lr_decay_rate": args.lr_decay_rate if args.lr_decay_rate is not None else tune.quniform(0.1, 1.0, 0.05),
-        "lr_decay_epoch": args.lr_decay_epoch if args.lr_decay_epoch is not None else tune.randint(0, args.epoch - 1),
-        "weight_decay": args.weight_decay if args.weight_decay is not None else tune.quniform(0.0, 0.1, 5e-5),
-        "lamba": args.lamba if args.lamba is not None else tune.qloguniform(1e-4, 1e-1, 5e-5),
-        "droprate_init_input": args.droprate_init_input if args.droprate_init_input is not None else tune.quniform(0.05, 1.0, 0.05),
-        "droprate_init": args.droprate_init if args.droprate_init is not None else tune.quniform(0.05, 1.0, 0.05),
-        "beta_ema": args.beta_ema if args.beta_ema is not None else tune.quniform(0.05, 1.0, 0.05),
+        "learning_rate": args.learning_rate if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1e-1, 5e-5),
+        "lr_decay_rate": args.lr_decay_rate if not args.hyperparameter_tuning else tune.quniform(0.1, 1.0, 0.05),
+        "lr_decay_epoch": args.lr_decay_epoch if not args.hyperparameter_tuning else tune.randint(0, args.epoch - 1),
+        "weight_decay": args.weight_decay if not args.hyperparameter_tuning else tune.quniform(0.0, 0.1, 5e-5),
+        "lamba": args.lamba if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5),
+        "droprate_init_input": args.droprate_init_input if not args.hyperparameter_tuning else tune.quniform(0.05, 1.0, 0.05),
+        "droprate_init": args.droprate_init if not args.hyperparameter_tuning else tune.quniform(0.05, 1.0, 0.05),
+        "beta_ema": args.beta_ema, # if not args.hyperparameter_tuning else tune.quniform(0.05, 1.0, 0.05),
         "local_rep": args.local_rep,
-        "temperature": args.temperature if args.temperature is not None else tune.quniform(0.05, 1.0, 0.05),
+        "temperature": args.temperature if not args.hyperparameter_tuning else tune.quniform(0.05, 5.0, 0.05),
         "group_l0": args.group_l0
     }
 
     data_path = os.path.join(os.path.join(os.path.dirname(__file__), DATA_DIR), args.data_set + '.data')
     info_path = os.path.join(os.path.join(os.path.dirname(__file__), DATA_DIR), args.data_set + '.info')
 
-    tuner = tune.Tuner(partial(experiment, data_path=data_path, info_path=info_path),
-                    tune_config=tune.TuneConfig(
-                                num_samples=args.num_samples
-                                ),
-                    # run_config=RunConfig(
-                    #             callbacks=[WandbLoggerCallback(project='l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_useNOT{}_N{}_local_rep{}_group_l0{}'.format(args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size, args.use_not, args.N, args.local_rep, args.group_l0))]
-                    #             ),
-                    param_space=config)
+    if args.hyperparameter_tuning:
+        trainable_with_cpu_gpu = tune.with_resources(partial(experiment, data_path=data_path, info_path=info_path), {"cpu": 4, "gpu": 0})
+        tuner = tune.Tuner(trainable_with_cpu_gpu,
+                        tune_config=tune.TuneConfig(
+                                    num_samples=args.num_samples
+                                    ),
+                        run_config=RunConfig(failure_config=train.FailureConfig(max_failures=3)),
+                        # run_config=RunConfig(
+                        #             callbacks=[WandbLoggerCallback(project='l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_useNOT{}_N{}_local_rep{}_group_l0{}'.format(args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size, args.use_not, args.N, args.local_rep, args.group_l0))]
+                        #             ),
+                        param_space=config)
 
-    results = tuner.fit()
+        results = tuner.fit()
+
+    else:
+        experiment(args=config, data_path=data_path, info_path=info_path)
 
     # args.folder_name = 'l0_{}_k{}_ki{}_useValidationSet{}_e{}_bs{}_lr{}_lrdr{}_lrde{}_wd{}_useNOT{}_lamba{}_droprate_init_input{}_droprate_init{}_N{}_beta_ema{}_local_rep{}_temperature{}'.format(
     #     args.data_set, args.kfold, args.ith_kfold, args.use_validation_set, args.epoch, args.batch_size,

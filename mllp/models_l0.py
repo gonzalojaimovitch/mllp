@@ -15,6 +15,7 @@ from torch.nn import init
 from torch.autograd import Variable
 import math
 from copy import deepcopy
+import multiprocessing
 
 from mllp.utils import UnionFind
 
@@ -96,8 +97,8 @@ class L0ConjunctionLayer(nn.Module):
             processed_input = input # NEW
             # output = input.mm(weights) # NEW
         output = torch.prod((1 - (1 - processed_input)[:, :, None] * weights[None, :, :]), dim=1) # NEW
-        # if self.use_bias: # NEW
-        #     output.add_(self.bias) # NEW
+        if self.use_bias: # NEW
+            output.add_(self.bias) # NEW
         return output
 
     def binarized_forward(self, x): # UPDATED
@@ -105,6 +106,7 @@ class L0ConjunctionLayer(nn.Module):
             if self.use_not:
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
+            weights = self.sample_weights()
             Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return torch.prod((1 - (1 - x)[:, :, None] * Wb[None, :, :]), dim=1)
@@ -174,11 +176,17 @@ class L0ConjunctionLayer(nn.Module):
     def sample_z(self, batch_size, sample=True): # NEW
         """Sample the hard-concrete gates for training and use a deterministic value for testing"""
         if sample:
-            eps = self.get_eps(self.floatTensor(batch_size, self.in_features))
+            if self.group_l0:
+                eps = self.get_eps(self.floatTensor(batch_size, self.in_features))
+            else:
+                eps = self.get_eps(self.floatTensor(batch_size, self.in_features, self.out_features)) # TO CORRECT
             z = self.quantile_concrete(eps)
             return F.hardtanh(z, min_val=0, max_val=1)
         else:  # mode
-            pi = F.sigmoid(self.qz_loga).view(1, self.in_features).expand(batch_size, self.in_features)
+            if self.group_l0:
+                pi = F.sigmoid(self.qz_loga).view(1, self.in_features).expand(batch_size, self.in_features)
+            else:
+                pi = F.sigmoid(self.qz_loga).view(1, self.in_features, self.out_features).expand(batch_size, self.in_features, self.out_features) # TO CORRECT
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
     def sample_weights(self): # NEW
@@ -187,7 +195,10 @@ class L0ConjunctionLayer(nn.Module):
         else:
             z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
-        self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
+        if self.group_l0:
+            self.mask_zero_weights = (torch.where(mask == 0, 1, 0).sum() * self.out_features).item()
+        else:
+            self.mask_zero_weights = (torch.where(mask == 0, 1, 0).sum()).item()
         
         if self.group_l0:
             return mask.view(self.in_features, 1) * self.weights
@@ -263,8 +274,8 @@ class L0DisjunctionLayer(nn.Module):
             processed_input = input # NEW
             # output = input.mm(weights) # NEW
         output = 1 - torch.prod(1 - processed_input[:, :, None] * weights[None, :, :], dim=1) # UPDATED
-        # if self.use_bias: # NEW
-        #     output.add_(self.bias) # NEW
+        if self.use_bias: # NEW
+            output.add_(self.bias) # NEW
         return output
 
     def binarized_forward(self, x): # UPDATED
@@ -355,7 +366,11 @@ class L0DisjunctionLayer(nn.Module):
         else:
             z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
-        self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
+
+        if self.group_l0:
+            self.mask_zero_weights = (torch.where(mask == 0, 1, 0).sum() * self.out_features).item()
+        else:
+            self.mask_zero_weights = (torch.where(mask == 0, 1, 0).sum()).item()
         
         if self.group_l0:
             return mask.view(self.in_features, 1) * self.weights
@@ -587,6 +602,8 @@ class L0MLLP(nn.Module):
         accuracy_v_b = [] if X_validation is not None and y_validation is not None else None
         f1_score_v = [] if X_validation is not None and y_validation is not None else None
         f1_score_v_b = [] if X_validation is not None and y_validation is not None else None
+        total_mask_zero_weights_list = []
+        total_zero_weights_list = []
 
         self.weight_decay = weight_decay # NEW
 
@@ -606,13 +623,13 @@ class L0MLLP(nn.Module):
         total_weights = 0 # NEW
         for k, layer in enumerate(self.layers):  # NEW
             total_weights += layer.weights.size()[0] * layer.weights.size()[1]# NEW
-        print(f"Total weights: {total_weights}") # NEW
+        # print(f"Total weights: {total_weights}") # NEW
 
         for epo in tqdm(range(epoch), desc="Epochs"):
             # Print 0 weigths before optimizer step
             total_zero_weights = 0 # NEW
             for k, layer in enumerate(self.layers):  # NEW
-                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
+                total_zero_weights += (torch.where(layer.weights == 0, 1, 0).sum()).item() # NEW
             # print(f"Total 0 weights start: {total_zero_weights}") # NEW
 
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
@@ -650,12 +667,15 @@ class L0MLLP(nn.Module):
             # Print 0 weigths after optimizer step
             total_zero_weights = 0
             for k, layer in enumerate(self.layers):  # NEW
-                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
+                total_zero_weights += (torch.where(layer.weights == 0, 1, 0).sum()).item() # NEW
             # print(f"Total 0 weights end epoch: {total_zero_weights}")
 
             logging.info('epoch: {}, loss: {}'.format(epo, running_loss  / len(data_loader)))
             print('epoch: {}, loss: {}'.format(epo, running_loss / len(data_loader)))
             loss_log.append(running_loss)
+            total_mask_zero_weights_list.append(total_mask_zero_weights)
+            total_zero_weights_list.append(total_zero_weights)
+            
             # Change the set of weights to be binarized every epoch.
 
             # Test the validation set or training set every 5 epochs.
@@ -682,14 +702,14 @@ class L0MLLP(nn.Module):
                     accuracy_v_b.append(acc_v_b)
                     f1_score_v.append(f1_v)
                     f1_score_v_b.append(f1_v_b)
-        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b
+        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_zero_weights_list, total_zero_weights_list
 
     def test(self, X, y, need_transform=True):
         if need_transform:
             X, y = self.data_transform(X, y)
         with torch.no_grad():
             X = X.to(self.device)
-            test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False)
+            test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False, num_workers=multiprocessing.cpu_count(), pin_memory=True)
 
             y = y.cpu().numpy().astype(int)
             y = np.argmax(y, axis=1)
