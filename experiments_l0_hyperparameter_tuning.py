@@ -115,8 +115,8 @@ def experiment(args, data_path, info_path):
     test_accuracy_b_ikf = []
     test_f1_score_ikf = []
     test_f1_score_b_ikf = []
-    total_mask_zero_weights_list_ikf = []
-    total_zero_weights_list_ikf = []
+    total_mask_active_weights_list_ikf = []
+    total_active_weights_list_ikf = []
     k_run_time = []
 
     for ikf in range(args.kfold):
@@ -175,7 +175,7 @@ def experiment(args, data_path, info_path):
                 group_l0=args.group_l0)
         net.to(device)
 
-        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_zero_weights_list, total_zero_weights_list = net.train(
+        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_weights = net.train_model(
             X_train,
             y_train,
             X_validation=X_validation,
@@ -195,8 +195,8 @@ def experiment(args, data_path, info_path):
         accuracy_v_b_ikf.append(accuracy_v_b)
         f1_score_v_ikf.append(f1_score_v)
         f1_score_v_b_ikf.append(f1_score_v_b)
-        total_mask_zero_weights_list_ikf.append(total_mask_zero_weights_list)
-        total_zero_weights_list_ikf.append(total_zero_weights_list)
+        total_mask_active_weights_list_ikf.append(total_mask_active_weights_list)
+        total_active_weights_list_ikf.append(total_active_weights_list)
 
         plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b)
 
@@ -226,10 +226,12 @@ def experiment(args, data_path, info_path):
         report_dict = {"epoch": i}
         report_dict.update({"loss_avg": statistics.mean([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"loss_sd": statistics.stdev([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_zero_weights_avg": statistics.mean([total_mask_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_zero_weights_sd": statistics.stdev([total_mask_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_zero_weights_avg": statistics.mean([total_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_zero_weights_sd": statistics.stdev([total_zero_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_active_weights_avg": statistics.mean([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_active_weights_sd": statistics.stdev([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_active_weights_avg": statistics.mean([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_active_weights_sd": statistics.stdev([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_active_weights_%_avg": statistics.mean([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
+        report_dict.update({"total_active_weights_%_avg": statistics.mean([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
         if i % 5 == 0:
             report_dict.update({"train_accuracy_kf_avg": statistics.mean([accuracy_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
                                 "train_accuracy_b_kf_avg": statistics.mean([accuracy_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
@@ -259,6 +261,7 @@ def experiment(args, data_path, info_path):
                                 "test_f1_score_b_kf_sd": statistics.stdev(test_f1_score_b_ikf)})
             report_dict.update({"run_time_kf_avg": statistics.mean(k_run_time)})
             report_dict.update({"run_time_kf_sd": statistics.stdev(k_run_time)})
+            report_dict.update({"total_weights": total_weights})
 
         wandb.log(report_dict)
         if args.hyperparameter_tuning:
