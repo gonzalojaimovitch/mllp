@@ -343,11 +343,11 @@ if __name__ == '__main__':
         "lr_decay_epoch": args.lr_decay_epoch if not args.hyperparameter_tuning else tune.randint(0, args.epoch - 1),
         "weight_decay": args.weight_decay if not args.hyperparameter_tuning else tune.quniform(0.0, 0.1, 5e-5),
         "lamba": args.lamba if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5),
-        "droprate_init_input": args.droprate_init_input if not args.hyperparameter_tuning else tune.quniform(0.05, 1.0, 0.05),
-        "droprate_init": args.droprate_init if not args.hyperparameter_tuning else tune.quniform(0.05, 1.0, 0.05),
-        "beta_ema": args.beta_ema, # if not args.hyperparameter_tuning else tune.quniform(0.05, 1.0, 0.05),
-        "local_rep": args.local_rep,
-        "temperature": args.temperature if not args.hyperparameter_tuning else tune.quniform(0.05, 5.0, 0.05),
+        "droprate_init_input": args.droprate_init_input if not args.hyperparameter_tuning else tune.quniform(0.05, 0.99, 0.01),
+        "droprate_init": args.droprate_init if not args.hyperparameter_tuning else tune.quniform(0.05, 0.99, 0.01),
+        "beta_ema": args.beta_ema, # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
+        "local_rep": args.local_rep if not args.hyperparameter_tuning else tune.choice([True, False]),
+        "temperature": args.temperature if not args.hyperparameter_tuning else tune.quniform(0.05, 4.0, 0.05),
         "group_l0": args.group_l0
     }
 
