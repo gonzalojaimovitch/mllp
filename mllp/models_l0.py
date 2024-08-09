@@ -19,7 +19,9 @@ import multiprocessing
 
 from mllp.utils import UnionFind
 
-THRESHOLD = 0.5
+THRESHOLD_W = 0.5
+THRESHOLD_Z = 0.5
+
 
 """Adaptation to L0 Reg
 
@@ -107,10 +109,10 @@ class L0ConjunctionLayer(nn.Module):
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
             z = self.sample_z(x.size(0), sample=False) # NEW
-            zb = torch.where(z > THRESHOLD, torch.ones_like(z), torch.zeros_like(z)).type(torch.int) # NEW
+            zb = torch.where(z > THRESHOLD_Z, torch.ones_like(z), torch.zeros_like(z)).type(torch.int) # NEW
             xin = x.mul(zb) # NEW
             processed_input = xin
-            Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int)
+            Wb = torch.where(self.weights > THRESHOLD_W, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int)
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return torch.prod((1 - (1 - processed_input)[:, :, None] * Wb[None, :, :]), dim=1) # UPDATED
 
@@ -215,6 +217,12 @@ class L0ConjunctionLayer(nn.Module):
         
         return torch.where(masked_weights > 0, 1, 0).sum().item()
 
+    def get_mask_fully_active_weights(self): # NEW
+        z = self.sample_z(1, False)
+        masked_weights = torch.mul(z.T, self.weights.clone().detach())
+        
+        return torch.where(masked_weights == 1, 1, 0).sum().item()
+
 
 class L0DisjunctionLayer(nn.Module):
     """The disjunction layer is used to learn the rule sets."""
@@ -293,10 +301,10 @@ class L0DisjunctionLayer(nn.Module):
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
             z = self.sample_z(x.size(0), sample=False) # NEW
-            zb = torch.where(z > THRESHOLD, torch.ones_like(z), torch.zeros_like(z)).type(torch.int) # NEW
+            zb = torch.where(z > THRESHOLD_Z, torch.ones_like(z), torch.zeros_like(z)).type(torch.int) # NEW
             xin = x.mul(zb) # NEW
             processed_input = xin # NEW
-            Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
+            Wb = torch.where(self.weights > THRESHOLD_W, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return 1 - torch.prod(1 - processed_input[:, :, None] * Wb[None, :, :], dim=1) # UPDATED
 
@@ -393,6 +401,12 @@ class L0DisjunctionLayer(nn.Module):
         masked_weights = torch.mul(z.T, self.weights.clone().detach())
         
         return torch.where(masked_weights > 0, 1, 0).sum().item()
+
+    def get_mask_fully_active_weights(self): # NEW
+        z = self.sample_z(1, False)
+        masked_weights = torch.mul(z.T, self.weights.clone().detach())
+        
+        return torch.where(masked_weights == 1, 1, 0).sum().item()
 
 
 
@@ -509,6 +523,13 @@ class L0MLLP(nn.Module):
             mask_active_weights += conj.get_mask_active_weights()
             mask_active_weights += disj.get_mask_active_weights()
         return mask_active_weights
+
+    def get_mask_fully_active_weights(self): # NEW
+        mask_fully_active_weights = 0
+        for conj, disj in zip(self.conj, self.disj):
+            mask_fully_active_weights += conj.get_mask_fully_active_weights()
+            mask_fully_active_weights += disj.get_mask_fully_active_weights()
+        return mask_fully_active_weights
 
     def get_total_weights(self): # NEW
         total_weights = 0
@@ -646,6 +667,7 @@ class L0MLLP(nn.Module):
         f1_score_v_b = [] if X_validation is not None and y_validation is not None else None
         total_mask_active_weights_list = []
         total_active_weights_list = []
+        total_mask_fully_active_weights_list = []
 
         self.weight_decay = weight_decay # NEW
 
@@ -696,6 +718,7 @@ class L0MLLP(nn.Module):
             # Get train mask active weights and active weights
             total_mask_active_weights = self.get_mask_active_weights() # NEW
             total_active_weights = self.get_active_weights() # NEW
+            total_mask_fully_active_weights = self.get_mask_fully_active_weights() # NEW
 
 
             logging.info('epoch: {}, loss: {}'.format(epo, running_loss  / len(data_loader)))
@@ -703,6 +726,7 @@ class L0MLLP(nn.Module):
             loss_log.append(running_loss)
             total_mask_active_weights_list.append(total_mask_active_weights) # NEW
             total_active_weights_list.append(total_active_weights) # NEW
+            total_mask_fully_active_weights_list.append(total_mask_fully_active_weights) # NEW
             
             # Change the set of weights to be binarized every epoch (Random Binarization)
 
@@ -730,7 +754,7 @@ class L0MLLP(nn.Module):
                     accuracy_v_b.append(acc_v_b)
                     f1_score_v.append(f1_v)
                     f1_score_v_b.append(f1_v_b)
-        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_weights
+        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_mask_fully_active_weights_list, total_weights
 
     def test(self, X, y, need_transform=True):
         if need_transform:
@@ -823,7 +847,7 @@ class L0MLLP(nn.Module):
                 for j, wj in enumerate(row):
                     if X is not None and activation_cnt_list[i][j % num] < 1:
                         continue
-                    if wj > THRESHOLD:
+                    if wj > THRESHOLD_W:
                         rules[k].append(j)
                         mark[(i - 1, j % num)] = 1
                         found = True

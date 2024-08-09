@@ -117,6 +117,7 @@ def experiment(args, data_path, info_path):
     test_f1_score_b_ikf = []
     total_mask_active_weights_list_ikf = []
     total_active_weights_list_ikf = []
+    total_mask_fully_active_weights_list_ikf = []
     k_run_time = []
 
     for ikf in range(args.kfold):
@@ -175,7 +176,7 @@ def experiment(args, data_path, info_path):
                 group_l0=args.group_l0)
         net.to(device)
 
-        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_weights = net.train_model(
+        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_mask_fully_active_weights_list, total_weights = net.train_model(
             X_train,
             y_train,
             X_validation=X_validation,
@@ -197,6 +198,7 @@ def experiment(args, data_path, info_path):
         f1_score_v_b_ikf.append(f1_score_v_b)
         total_mask_active_weights_list_ikf.append(total_mask_active_weights_list)
         total_active_weights_list_ikf.append(total_active_weights_list)
+        total_mask_fully_active_weights_list_ikf.append(total_mask_fully_active_weights_list)
 
         plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b)
 
@@ -230,8 +232,11 @@ def experiment(args, data_path, info_path):
         report_dict.update({"total_mask_active_weights_sd": statistics.stdev([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"total_active_weights_avg": statistics.mean([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"total_active_weights_sd": statistics.stdev([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_fully_active_weights_avg": statistics.mean([total_mask_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_mask_fully_active_weights_sd": statistics.stdev([total_mask_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"total_mask_active_weights_%_avg": statistics.mean([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
         report_dict.update({"total_active_weights_%_avg": statistics.mean([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
+        report_dict.update({"total_mask_fully_active_weights_%_avg": statistics.mean([total_mask_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
         if i % 5 == 0:
             report_dict.update({"train_accuracy_kf_avg": statistics.mean([accuracy_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
                                 "train_accuracy_b_kf_avg": statistics.mean([accuracy_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
@@ -340,7 +345,7 @@ if __name__ == '__main__':
         "use_not": args.use_not,
         "learning_rate": args.learning_rate if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1e-1, 5e-5),
         "lr_decay_rate": args.lr_decay_rate if not args.hyperparameter_tuning else tune.quniform(0.1, 1.0, 0.05),
-        "lr_decay_epoch": args.lr_decay_epoch if not args.hyperparameter_tuning else tune.randint(0, args.epoch - 1),
+        "lr_decay_epoch": args.lr_decay_epoch if not args.hyperparameter_tuning else tune.randint(1, args.epoch - 1),
         "weight_decay": args.weight_decay if not args.hyperparameter_tuning else tune.quniform(0.0, 0.1, 5e-5),
         "lamba": args.lamba if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5),
         "droprate_init_input": args.droprate_init_input if not args.hyperparameter_tuning else tune.quniform(0.05, 0.99, 0.01),
