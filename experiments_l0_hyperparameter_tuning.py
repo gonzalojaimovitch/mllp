@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import time
 import secrets
+import multiprocessing
 
 import statistics
 
@@ -67,6 +68,8 @@ def plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b):
 def experiment(args, data_path, info_path):
 
     args = argparse.Namespace(**args) # included to convert back the dict required for the tuner to the args object
+
+    print(args)
 
     wandb = setup_wandb(vars(args), rank_zero_only=False, entity='mllp_l0', project=args.project_name, name=f"experiment_{secrets.token_hex(3)}" if not args.hyperparameter_tuning else None)
 
@@ -163,6 +166,7 @@ def experiment(args, data_path, info_path):
         net_structure = [len(X_fname)] + list(map(int, args.structure.split('_'))) + [len(y_fname)]
         net = L0MLLP(net_structure,
                 device=device,
+                random_binarization_rate=args.random_binarization_rate,
                 use_not=args.use_not,
                 log_file=None,
                 N=args.N if args.N is not None else len(X_train_df),
@@ -277,25 +281,50 @@ def experiment(args, data_path, info_path):
 
 
 if __name__ == '__main__':
+    default = {
+        "kfold": 5,
+        "use_validation_set": True,
+        "epoch": 400,
+        "batch_size": 128,
+        "num_samples": 1,
+        "random_binarization_rate": 0.75,
+        "N": None,
+        "use_not": False,
+        "local_rep": False,
+        "group_l0": True,
+        "learning_rate": 0.05,
+        "lr_decay_rate": 0.75,
+        "lr_decay_epoch": 100,
+        "weight_decay": 10e-8,
+        "lamba": 1.0,
+        "droprate_init_input": 0.2,
+        "droprate_init": 0.5,
+        "beta_ema": 0.999,
+        "temperature": 2./3.,
+        "structure": '64' 
+    }
+
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # Arguments that will be passed or defaulted
-    parser.add_argument('-p', '--project_name', type=str,
+    parser.add_argument('--project_name', type=str,
                         help='Name of the Wandb project')
     parser.add_argument('-ht', '--hyperparameter_tuning',action="store_true",
                         help='Whether a hyperparameter tuning will be or not performed')
-    parser.add_argument('-d', '--data_set', type=str, default='connect-4',
+    parser.add_argument('-d', '--data_set', type=str,
                         help='Set the data set for training. All the data sets in the dataset folder are available.')
-    parser.add_argument('-k', '--kfold', type=int, default=5, help='Set the k of K-Folds cross-validation.')
+    parser.add_argument('-k', '--kfold', type=int, default=argparse.SUPPRESS, help='Set the k of K-Folds cross-validation.')
     # parser.add_argument('-ki', '--ith_kfold', type=int, default=0, help='Do the i-th validation, 0 <= ki < k.')
     parser.add_argument('--use_validation_set', action="store_true",
-                        help='Use the validation set for parameters tuning.', default=True)
-    parser.add_argument('-e', '--epoch', type=int, default=401, help='Set the total epoch.')
-    parser.add_argument('-bs', '--batch_size', type=int, default=64, help='Set the batch size.')
-    parser.add_argument('-ns', '--num_samples', type=int, default=1, help='Number of samples for the hyperparameter tuning search')
-    parser.add_argument('-N', type=int, default=None,
+                        help='Use the validation set for parameters tuning.')
+    parser.add_argument('-e', '--epoch', type=int, default=argparse.SUPPRESS, help='Set the total epoch.')
+    parser.add_argument('-bs', '--batch_size', type=int, default=argparse.SUPPRESS, help='Set the batch size.')
+    parser.add_argument('-ns', '--num_samples', type=int, default=argparse.SUPPRESS, help='Number of samples for the hyperparameter tuning search')
+    parser.add_argument('-p', '--random_binarization_rate',  type=float, default=argparse.SUPPRESS,
+                        help='Random Binarization Rate for MLLP')
+    parser.add_argument('-N', type=int, default=argparse.SUPPRESS,
                         help='L0 N parameter')
     parser.add_argument('--use_not', action="store_true",
-                        help='Use the NOT (~) operator in logical rules. '
+                        help='Use the NOT (~) operator in logical rules.'
                              'It will enhance model capability but make the CRS more complex.')
     parser.add_argument('--local_rep', action="store_true",
                         help='L0 local_rep parameter')
@@ -303,21 +332,21 @@ if __name__ == '__main__':
                         help='L0 group_l0 parameter')
 
     # Arguments that will be passed or set up by the tuner
-    parser.add_argument('-lr', '--learning_rate', type=float, default=0.05, help='Set the initial learning rate.')
-    parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=0.75, help='Set the learning rate decay rate.')
-    parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=100, help='Set the learning rate decay epoch.')
-    parser.add_argument('-wd', '--weight_decay', type=float, default=10e-8, help='Set the weight decay (L2 penalty).')
-    parser.add_argument('--lamba', type=float, default=1.0,#1,
+    parser.add_argument('-lr', '--learning_rate', type=float, default=argparse.SUPPRESS, help='Set the initial learning rate.')
+    parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=argparse.SUPPRESS, help='Set the learning rate decay rate.')
+    parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=argparse.SUPPRESS, help='Set the learning rate decay epoch.')
+    parser.add_argument('-wd', '--weight_decay', type=float, default=argparse.SUPPRESS, help='Set the weight decay (L2 penalty).')
+    parser.add_argument('--lamba', type=float, default=argparse.SUPPRESS,#1,
                         help='L0 Lamba parameter')
-    parser.add_argument('--droprate_init_input', type=float, default=0.2,
+    parser.add_argument('--droprate_init_input', type=float, default=argparse.SUPPRESS,
                         help='L0 droprate_init_input parameter')
-    parser.add_argument('--droprate_init', type=float, default=0.5,
+    parser.add_argument('--droprate_init', type=float, default=argparse.SUPPRESS,
                         help='L0 droprate_init parameter')
-    parser.add_argument('--beta_ema', type=float, default=0.999,
+    parser.add_argument('--beta_ema', type=float, default=argparse.SUPPRESS,
                         help='L0 beta_ema parameter')
-    parser.add_argument('--temperature', type=float, default=2./3.,
+    parser.add_argument('--temperature', type=float, default=argparse.SUPPRESS,
                         help='L0 temperature parameter')
-    parser.add_argument('-s', '--structure', type=str, default='64', # '64,
+    parser.add_argument('-s', '--structure', type=str, default=argparse.SUPPRESS,
                         help='Set the structure of network. Only the number of nodes in middle layers are needed. '
                              'E.g., 64, 64_32_16. The total number of middle layers should be odd.')
 
@@ -326,41 +355,44 @@ if __name__ == '__main__':
 
     # set seed
     torch.manual_seed(0)
-    # np.random.seed(0)
+    # np.random.seed(0) # Commented to allow different runs of Ray Tuner different hyperparameters
     
     args = parser.parse_args()
+
+    print(args)
 
     config = {
         "project_name": args.project_name,
         "hyperparameter_tuning": args.hyperparameter_tuning,
         "data_set": args.data_set,
-        "kfold": args.kfold,
+        "kfold": args.kfold if hasattr(args, "kfold") else default["kfold"],
         # "ith_kfold": args.ith_kfold,
-        "use_validation_set": args.use_validation_set,
-        "epoch": args.epoch,
-        "batch_size": args.batch_size,
-        "num_samples": args.num_samples,
-        "structure": args.structure if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"]),
-        "N": args.N,
-        "use_not": args.use_not,
-        "learning_rate": args.learning_rate if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1e-1, 5e-5),
-        "lr_decay_rate": args.lr_decay_rate if not args.hyperparameter_tuning else tune.quniform(0.1, 1.0, 0.05),
-        "lr_decay_epoch": args.lr_decay_epoch if not args.hyperparameter_tuning else tune.randint(1, args.epoch - 1),
-        "weight_decay": args.weight_decay if not args.hyperparameter_tuning else tune.quniform(0.0, 0.1, 5e-5),
-        "lamba": args.lamba if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5),
-        "droprate_init_input": args.droprate_init_input if not args.hyperparameter_tuning else tune.quniform(0.05, 0.99, 0.01),
-        "droprate_init": args.droprate_init if not args.hyperparameter_tuning else tune.quniform(0.05, 0.99, 0.01),
-        "beta_ema": args.beta_ema, # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
-        "local_rep": args.local_rep if not args.hyperparameter_tuning else tune.choice([True, False]),
-        "temperature": args.temperature if not args.hyperparameter_tuning else tune.quniform(0.05, 4.0, 0.05),
-        "group_l0": args.group_l0
+        "use_validation_set": args.use_validation_set if args.use_validation_set else default["use_validation_set"],
+        "epoch": args.epoch if hasattr(args, "epoch") else default["epoch"],
+        "batch_size": args.batch_size if hasattr(args, "batch_size") else default["batch_size"],
+        "num_samples": args.num_samples if hasattr(args, "num_samples") else default["num_samples"],
+        "random_binarization_rate": args.random_binarization_rate if hasattr(args, "random_binarization_rate") else default["random_binarization_rate"],
+        "N": args.N if hasattr(args, "N") else default["N"],
+        "use_not": args.use_not if args.use_not else default["use_not"],
+        "group_l0": args.group_l0 if args.group_l0 else default["group_l0"],
+        "beta_ema": args.beta_ema if hasattr(args, "beta_ema") else default["beta_ema"], # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
+        "structure": args.structure if hasattr(args, "structure") else (default["structure"] if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"])),
+        "learning_rate": args.learning_rate if hasattr(args, "learning_rate") else (default["learning_rate"] if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1e-1, 5e-5)),
+        "lr_decay_rate": args.lr_decay_rate if hasattr(args, "lr_decay_rate") else (default["lr_decay_rate"] if not args.hyperparameter_tuning else tune.quniform(0.1, 1.0, 0.05)),
+        "lr_decay_epoch": args.lr_decay_epoch if hasattr(args, "lr_decay_epoch") else (default["lr_decay_epoch"] if not args.hyperparameter_tuning else tune.randint(1, args.epoch - 1)),
+        "weight_decay": args.weight_decay if hasattr(args, "weight_decay") else (default["weight_decay"] if not args.hyperparameter_tuning else tune.quniform(0.0, 0.1, 5e-5)),
+        "lamba": args.lamba if hasattr(args, "lamba") else (default["lamba"] if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5)),
+        "droprate_init_input": args.droprate_init_input if hasattr(args, "droprate_init_input") else (default["droprate_init_input"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
+        "droprate_init": args.droprate_init if hasattr(args, "droprate_init") else (default["droprate_init"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
+        "local_rep": args.local_rep if args.local_rep else (default["local_rep"] if not args.hyperparameter_tuning else tune.choice([True, False])),
+        "temperature": args.temperature if hasattr(args, "temperature") else (default["temperature"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
     }
 
     data_path = os.path.join(os.path.join(os.path.dirname(__file__), DATA_DIR), args.data_set + '.data')
     info_path = os.path.join(os.path.join(os.path.dirname(__file__), DATA_DIR), args.data_set + '.info')
 
     if args.hyperparameter_tuning:
-        trainable_with_cpu_gpu = tune.with_resources(partial(experiment, data_path=data_path, info_path=info_path), {"cpu": 4, "gpu": 0})
+        trainable_with_cpu_gpu = tune.with_resources(partial(experiment, data_path=data_path, info_path=info_path), {"cpu": multiprocessing.cpu_count(), "gpu": torch.cuda.device_count()})
         tuner = tune.Tuner(trainable_with_cpu_gpu,
                         tune_config=tune.TuneConfig(
                                     num_samples=args.num_samples

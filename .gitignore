@@ -1,10 +1,11 @@
-venv
+venv/
 .idea
 __pycache__
 .ipynb_checkpoints
 *.gv
 *.model
 *.pth
+wandb/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
