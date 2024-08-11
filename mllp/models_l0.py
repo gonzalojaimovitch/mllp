@@ -118,11 +118,15 @@ class L0ConjunctionLayer(nn.Module):
     def forward(self, input, randomly_binarize=False): # UPDATED
         if self.use_not:
             input= torch.cat((input, 1 - input), dim=1)
-        if self.local_rep or not self.training: # NEW
-            z = self.sample_z(input.size(0), sample=self.training) # NEW
-            xin = input.mul(z) # NEW
-            processed_input = xin # NEW
-            weights = self.weights # NEW
+        # if self.local_rep or not self.training: # NEW
+        if not self.training: # NEW
+            # z = self.sample_z(input.size(0), sample=self.training) # NEW
+            z = self.sample_z(1, sample=self.training) # NEW
+            # xin = input.mul(z) # NEW
+            # processed_input = xin # NEW
+            processed_input = input # NEW
+            # weights = self.weights # NEW
+            weights = z.view(self.in_features, 1) * self.weights # NEW
             # output = xin.mm(self.weights) # NEW
         else:
             weights = self.sample_weights() # NEW
@@ -139,11 +143,12 @@ class L0ConjunctionLayer(nn.Module):
             if self.use_not:
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
-            z = self.sample_z(x.size(0), sample=False) # NEW
+            z = self.sample_z(1, sample=False) # NEW
             zb = torch.where(z > THRESHOLD_Z, torch.ones_like(z), torch.zeros_like(z)).type(torch.int) # NEW
-            xin = x.mul(zb) # NEW
-            processed_input = xin
-            Wb = torch.where(self.weights > THRESHOLD_W, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int)
+            # xin = x.mul(zb) # NEW
+            # processed_input = xin # NEW
+            processed_input = x
+            Wb = zb.view(self.in_features, 1) * torch.where(self.weights > THRESHOLD_W, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return torch.prod((1 - (1 - processed_input)[:, :, None] * Wb[None, :, :]), dim=1) # UPDATED
 
@@ -309,11 +314,15 @@ class L0DisjunctionLayer(nn.Module):
     def forward(self, input, randomly_binarize=False): # UPDATED
         if self.use_not:
             input = torch.cat((input, 1 - input), dim=1)
-        if self.local_rep or not self.training: # NEW
-            z = self.sample_z(input.size(0), sample=self.training) # NEW
-            xin = input.mul(z) # NEW
-            processed_input = xin # NEW
-            weights = self.weights # NEW
+        # if self.local_rep or not self.training: # NEW
+        if not self.training: # NEW
+            # z = self.sample_z(input.size(0), sample=self.training) # NEW
+            z = self.sample_z(1, sample=self.training) # NEW
+            # xin = input.mul(z) # NEW
+            # processed_input = xin # NEW
+            processed_input = input # NEW
+            # weights = self.weights # NEW
+            weights = z.view(self.in_features, 1) * self.weights # NEW
             # output = xin.mm(self.weights) # NEW
         else:
             weights = self.sample_weights() # NEW
@@ -330,11 +339,12 @@ class L0DisjunctionLayer(nn.Module):
             if self.use_not:
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
-            z = self.sample_z(x.size(0), sample=False) # NEW
+            z = self.sample_z(1, sample=False) # NEW
             zb = torch.where(z > THRESHOLD_Z, torch.ones_like(z), torch.zeros_like(z)).type(torch.int) # NEW
-            xin = x.mul(zb) # NEW
-            processed_input = xin # NEW
-            Wb = torch.where(self.weights > THRESHOLD_W, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
+            # xin = x.mul(zb) # NEW
+            # processed_input = xin # NEW
+            processed_input = x
+            Wb = zb.view(self.in_features, 1) * torch.where(self.weights > THRESHOLD_W, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return 1 - torch.prod(1 - processed_input[:, :, None] * Wb[None, :, :], dim=1) # UPDATED
 
@@ -468,7 +478,7 @@ class L0MLLP(nn.Module):
     """
 
     def __init__(self, dim_list, device, random_binarization_rate=0.75, use_not=False, log_file=None, N=50000, beta_ema=0.999,
-                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3., group_l0=False): # UPDATED
+                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3., group_l0=False, use_bias=False): # UPDATED
         """
 
         Parameters
@@ -495,6 +505,7 @@ class L0MLLP(nn.Module):
         else:
             logging.basicConfig(level=logging.INFO, filename=log_file, filemode='w', format=log_format)
 
+        self.random_binarization_rate = random_binarization_rate
         self.N = N # NEW
         self.beta_ema = beta_ema # NEW
         # self.weight_decay = self.N * weight_decay # NEW
@@ -503,6 +514,7 @@ class L0MLLP(nn.Module):
         self.dim_list = dim_list
         self.device = device
         self.use_not = use_not
+        self.use_bias = use_bias
         self.group_l0 = group_l0
         self.enc = None
         self.conj = []
@@ -510,9 +522,9 @@ class L0MLLP(nn.Module):
 
         for i in range(0, len(dim_list) - 2, 2):
             conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], random_binarization_rate, use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False, group_l0=group_l0)
+                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=use_bias, group_l0=group_l0)
             disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], random_binarization_rate, use_not=False, droprate_init=droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False, group_l0=group_l0)
+                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=use_bias, group_l0=group_l0)
             self.add_module('conj{}'.format(i), conj)
             self.add_module('disj{}'.format(i), disj)
             self.conj.append(conj)
@@ -733,7 +745,7 @@ class L0MLLP(nn.Module):
                 X = X.to(self.device)
                 y = y.to(self.device)
                 optimizer.zero_grad()  # Zero the gradient buffers.
-                y_pred = self.forward(X, randomly_binarize=True)
+                y_pred = self.forward(X, randomly_binarize=True if self.random_binarization_rate > 0.0 else False)
                 loss = loss_function(y_pred, y) # UPDATED
                 running_loss += loss.item()
                 loss.backward()

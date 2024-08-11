@@ -177,7 +177,8 @@ def experiment(args, data_path, info_path):
                 droprate_init=args.droprate_init,
                 local_rep=args.local_rep,
                 temperature=args.temperature,
-                group_l0=args.group_l0)
+                group_l0=args.group_l0,
+                use_bias=args.use_bias)
         net.to(device)
 
         loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_mask_fully_active_weights_list, total_weights = net.train_model(
@@ -301,7 +302,8 @@ if __name__ == '__main__':
         "droprate_init": 0.5,
         "beta_ema": 0.999,
         "temperature": 2./3.,
-        "structure": '64' 
+        "structure": '64',
+        "use_bias": False
     }
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -330,6 +332,8 @@ if __name__ == '__main__':
                         help='L0 local_rep parameter')
     parser.add_argument('--group_l0', action="store_true",
                         help='L0 group_l0 parameter')
+    parser.add_argument('--use_bias', action="store_true",
+                        help='L0 use_bias parameter')
 
     # Arguments that will be passed or set up by the tuner
     parser.add_argument('-lr', '--learning_rate', type=float, default=argparse.SUPPRESS, help='Set the initial learning rate.')
@@ -376,6 +380,7 @@ if __name__ == '__main__':
         "use_not": args.use_not if args.use_not else default["use_not"],
         "group_l0": args.group_l0 if args.group_l0 else default["group_l0"],
         "beta_ema": args.beta_ema if hasattr(args, "beta_ema") else default["beta_ema"], # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
+        "use_bias": args.use_bias if args.use_bias else default["use_bias"],
         "structure": args.structure if hasattr(args, "structure") else (default["structure"] if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"])),
         "learning_rate": args.learning_rate if hasattr(args, "learning_rate") else (default["learning_rate"] if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1e-1, 5e-5)),
         "lr_decay_rate": args.lr_decay_rate if hasattr(args, "lr_decay_rate") else (default["lr_decay_rate"] if not args.hyperparameter_tuning else tune.quniform(0.1, 1.0, 0.05)),
