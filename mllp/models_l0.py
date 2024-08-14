@@ -27,6 +27,7 @@ THRESHOLD = 0.5
 
 limit_a, limit_b, epsilon = -.1, 1.1, 1e-6
 
+
 class L0ConjunctionLayer(nn.Module):
     """The conjunction layer is used to learn the rules."""
 
@@ -55,57 +56,63 @@ class L0ConjunctionLayer(nn.Module):
     - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
     """
 
-    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=0.1, local_rep=False, **kwargs): # UPDATED
+    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5,
+                 temperature=2. / 3., lamba=0.1, local_rep=False, **kwargs):  # UPDATED
         super(L0ConjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
 
-        self.in_features = in_features if not use_not else in_features * 2 # UPDATED
-        self.out_features = out_features # UPDATED
-        self.prior_prec = weight_decay # NEW
-        self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
-        self.sampled_weights = None # NEW
-        self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
-        self.temperature = temperature # NEW
+        self.in_features = in_features if not use_not else in_features * 2  # UPDATED
+        self.out_features = out_features  # UPDATED
+        self.prior_prec = weight_decay  # NEW
+        self.weights = Parameter(0.1 * torch.rand(in_features, out_features))  # UPDATED
+        self.sampled_weights = None  # NEW
+        self.qz_loga = Parameter(torch.Tensor(in_features, out_features))  # NEW
+        self.temperature = temperature  # NEW
         # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
-        self.droprate_init = droprate_init # NEW
-        self.lamba = lamba # NEW
-        self.use_bias = False # NEW
-        self.local_rep = local_rep # NEW
-        self.mask_zero_weights  = None # NEW
-        if bias: # NEW
-            self.bias = Parameter(torch.Tensor(out_features)) # NEW
-            self.use_bias = True # NEW
-        self.floatTensor = torch.FloatTensor if not torch.cuda.is_available() else torch.cuda.FloatTensor # NEW
-        self.reset_parameters() # NEW
+        self.droprate_init = droprate_init  # NEW
+        self.lamba = lamba  # NEW
+        self.use_bias = False  # NEW
+        self.local_rep = local_rep  # NEW
+        self.mask_zero_weights = None  # NEW
+        if bias:  # NEW
+            self.bias = Parameter(torch.Tensor(out_features))  # NEW
+            self.use_bias = True  # NEW
+        self.floatTensor = torch.FloatTensor if not torch.cuda.is_available() else torch.cuda.FloatTensor  # NEW
+        self.reset_parameters()  # NEW
 
-    def forward(self, input): # UPDATED
+    def forward(self, input):  # UPDATED
         if self.use_not:
-            input= torch.cat((input, 1 - input), dim=1)
-        if self.local_rep or not self.training: # NEW
-            z = self.sample_z(input.size(0), sample=self.training) # NEW
-            xin = input.mul(z) # NEW
-            processed_input = xin # NEW
+            input = torch.cat((input, 1 - input), dim=1)
+        if self.local_rep or not self.training:  # NEW
+            # TODO is this different in the binarized_forward?
+            z = self.sample_z(input.size(0), sample=self.training)  # NEW
+            xin = input.mul(z)  # NEW
+            processed_input = xin  # NEW
             # output = xin.mm(self.weights) # NEW
         else:
-            weights = self.sample_weights() # NEW
-            processed_input = input # NEW
+            weights = self.sample_weights()  # NEW
+            processed_input = input  # NEW
             # output = input.mm(weights) # NEW
-        output = torch.prod((1 - (1 - processed_input)[:, :, None] * weights[None, :, :]), dim=1) # NEW
+
+        # TODO: weights is not self.weights!
+        output = torch.prod((1 - (1 - processed_input)[:, :, None] * weights[None, :, :]), dim=1)  # NEW
         # if self.use_bias: # NEW
         #     output.add_(self.bias) # NEW
         return output
 
-    def binarized_forward(self, x): # UPDATED
+    def binarized_forward(self, x):  # UPDATED
         with torch.no_grad():
             if self.use_not:
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
-            Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
+            mask = self.sample_z(x.size(0), sample=False)
+            Wb = torch.where((self.weights > THRESHOLD) * (mask > 0.0), torch.ones_like(self.weights),
+                             torch.zeros_like(self.weights)).type(torch.int)  # UPDATED
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return torch.prod((1 - (1 - x)[:, :, None] * Wb[None, :, :]), dim=1)
 
-    def reset_parameters(self): # NEW
+    def reset_parameters(self):  # NEW
         # init.kaiming_normal(self.weights, mode='fan_out')
 
         self.qz_loga.data.normal_(math.log(1 - self.droprate_init) - math.log(self.droprate_init), 1e-2)
@@ -113,10 +120,10 @@ class L0ConjunctionLayer(nn.Module):
         if self.use_bias:
             self.bias.data.fill_(0)
 
-    def constrain_parameters(self, **kwargs): # NEW
+    def constrain_parameters(self, **kwargs):  # NEW
         self.qz_loga.data.clamp_(min=math.log(1e-2), max=math.log(1e2))
 
-    def cdf_qz(self, x): # NEW
+    def cdf_qz(self, x):  # NEW
         """Implements the CDF of the 'stretched' concrete distribution"""
         xn = (x - limit_a) / (limit_b - limit_a)
         logits = math.log(xn) - math.log(1 - xn)
@@ -126,12 +133,12 @@ class L0ConjunctionLayer(nn.Module):
         # let's use what is described in the paper (it's more specific, while the above is more general)
         return F.sigmoid(self.qz_loga - self.temperature * math.log(-limit_a / limit_b))
 
-    def quantile_concrete(self, x): # NEW
+    def quantile_concrete(self, x):  # NEW
         """Implements the quantile, aka inverse CDF, of the 'stretched' concrete distribution"""
         y = F.sigmoid((torch.log(x) - torch.log(1 - x) + self.qz_loga) / self.temperature)
         return y * (limit_b - limit_a) + limit_a
 
-    def _reg_w(self): # NEW
+    def _reg_w(self):  # NEW
         """Expected L0 norm under the stochastic gates, takes into account and re-weights also a potential L2 penalty"""
         # logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
         # logpw_col = - (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba
@@ -141,7 +148,7 @@ class L0ConjunctionLayer(nn.Module):
         return lc
         # return logpw + logpb
 
-    def regularization(self): # NEW
+    def regularization(self):  # NEW
         return self._reg_w() * self.lamba
 
     def count_expected_flops_and_l0(self):
@@ -157,28 +164,29 @@ class L0ConjunctionLayer(nn.Module):
             expected_l0 += self.out_features
         return expected_flops.item(), expected_l0.item()
 
-    def get_eps(self, size): # NEW
+    def get_eps(self, size):  # NEW
         """Uniform random numbers for the concrete distribution"""
-        eps = self.floatTensor(size).uniform_(epsilon, 1-epsilon)
+        eps = self.floatTensor(size).uniform_(epsilon, 1 - epsilon)
         eps = Variable(eps)
         return eps
 
-    def sample_z(self, batch_size, sample=True): # NEW
+    def sample_z(self, batch_size, sample=True):  # NEW
         """Sample the hard-concrete gates for training and use a deterministic value for testing"""
         if sample:
-            eps = self.get_eps(self.floatTensor(batch_size, self.in_features))
+            eps = self.get_eps(self.floatTensor(batch_size, self.in_features, self.out_features))
             z = self.quantile_concrete(eps)
             return F.hardtanh(z, min_val=0, max_val=1)
         else:  # mode
-            pi = F.sigmoid(self.qz_loga).view(1, self.in_features).expand(batch_size, self.in_features)
+            pi = F.sigmoid(
+                self.qz_loga)  # .view(1, self.in_features, self.out_features).expand(batch_size, self.in_features, self.out_features)
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
-    def sample_weights(self): # NEW
+    def sample_weights(self):  # NEW
         z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
-        self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
-        return mask.view(self.in_features, self.out_features) * self.weights
-
+        self.mask_active_weights = torch.where(mask > 0.0, 1, 0).sum()
+        return mask.view(self.in_features,
+                         self.out_features) * self.weights  # F.hardtanh(self.weights, min_val=0, max_val=1)
 
 
 class L0DisjunctionLayer(nn.Module):
@@ -208,56 +216,60 @@ class L0DisjunctionLayer(nn.Module):
     reset_parameters
     - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
     """
-    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=1., local_rep=False, **kwargs): # UPDATED
+
+    def __init__(self, in_features, out_features, use_not=False, bias=True, weight_decay=1., droprate_init=0.5,
+                 temperature=2. / 3., lamba=1., local_rep=False, **kwargs):  # UPDATED
         super(L0DisjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
 
-        self.in_features = in_features if not use_not else in_features * 2 # UPDATED
-        self.out_features = out_features # UPDATED
-        self.prior_prec = weight_decay # NEW
-        self.weights = Parameter(0.1 * torch.rand(in_features, out_features)) # UPDATED
-        self.qz_loga = Parameter(torch.Tensor(in_features, out_features)) # NEW
-        self.temperature = temperature # NEW
+        self.in_features = in_features if not use_not else in_features * 2  # UPDATED
+        self.out_features = out_features  # UPDATED
+        self.prior_prec = weight_decay  # NEW
+        self.weights = Parameter(0.1 * torch.rand(in_features, out_features))  # UPDATED
+        self.qz_loga = Parameter(torch.Tensor(in_features, out_features))  # NEW
+        self.temperature = temperature  # NEW
         # self.droprate_init = droprate_init if droprate_init != 0. else 0.5 # NEW
-        self.droprate_init = droprate_init # NEW
-        self.lamba = lamba # NEW
-        self.use_bias = False # NEW
-        self.local_rep = local_rep # NEW
-        self.mask_zero_weights = None # NEW
-        if bias: # NEW
-            self.bias = Parameter(torch.Tensor(out_features)) # NEW
-            self.use_bias = True # NEW
-        self.floatTensor = torch.FloatTensor if not torch.cuda.is_available() else torch.cuda.FloatTensor # NEW
-        self.reset_parameters() # NEW
+        self.droprate_init = droprate_init  # NEW
+        self.lamba = lamba  # NEW
+        self.use_bias = False  # NEW
+        self.local_rep = local_rep  # NEW
+        self.mask_nonzero_weights = None  # NEW
+        if bias:  # NEW
+            self.bias = Parameter(torch.Tensor(out_features))  # NEW
+            self.use_bias = True  # NEW
+        self.floatTensor = torch.FloatTensor if not torch.cuda.is_available() else torch.cuda.FloatTensor  # NEW
+        self.reset_parameters()  # NEW
 
-    def forward(self, input): # UPDATED
+    def forward(self, input):  # UPDATED
         if self.use_not:
             input = torch.cat((input, 1 - input), dim=1)
-        if self.local_rep or not self.training: # NEW
-            z = self.sample_z(input.size(0), sample=self.training) # NEW
-            xin = input.mul(z) # NEW
-            processed_input = xin # NEW
+        if self.local_rep or not self.training:  # NEW
+            z = self.sample_z(input.size(0), sample=self.training)  # NEW
+            xin = input.mul(z)  # NEW
+            processed_input = xin  # NEW
             # output = xin.mm(self.weights) # NEW
         else:
-            weights = self.sample_weights() # NEW
-            processed_input = input # NEW
+            weights = self.sample_weights()  # NEW
+            processed_input = input  # NEW
             # output = input.mm(weights) # NEW
-        output = 1 - torch.prod(1 - processed_input[:, :, None] * weights[None, :, :], dim=1) # UPDATED
+        output = 1 - torch.prod(1 - processed_input[:, :, None] * weights[None, :, :], dim=1)  # UPDATED
         # if self.use_bias: # NEW
         #     output.add_(self.bias) # NEW
         return output
 
-    def binarized_forward(self, x): # UPDATED
+    def binarized_forward(self, x):  # UPDATED
         with torch.no_grad():
             if self.use_not:
                 x = torch.cat((x, 1 - x), dim=1)
             x = x.type(torch.int)
-            Wb = torch.where(self.weights > THRESHOLD, torch.ones_like(self.weights), torch.zeros_like(self.weights)).type(torch.int) # UPDATED
+            mask = self.sample_z(x.size(0), sample=False)
+            Wb = torch.where((self.weights > THRESHOLD) * (mask > 0.0), torch.ones_like(self.weights),
+                             torch.zeros_like(self.weights)).type(torch.int)  # UPDATED
             # Wb = torch.where(self.qz_loga > 0.0, torch.ones_like(self.qz_loga), torch.zeros_like(self.qz_loga)).type(torch.int) # UPDATED
             return 1 - torch.prod(1 - x[:, :, None] * Wb[None, :, :], dim=1)
 
-    def reset_parameters(self): # NEW
+    def reset_parameters(self):  # NEW
         # init.kaiming_normal(self.weights, mode='fan_out')
 
         self.qz_loga.data.normal_(math.log(1 - self.droprate_init) - math.log(self.droprate_init), 1e-2)
@@ -265,10 +277,10 @@ class L0DisjunctionLayer(nn.Module):
         if self.use_bias:
             self.bias.data.fill_(0)
 
-    def constrain_parameters(self, **kwargs): # NEW
+    def constrain_parameters(self, **kwargs):  # NEW
         self.qz_loga.data.clamp_(min=math.log(1e-2), max=math.log(1e2))
 
-    def cdf_qz(self, x): # NEW
+    def cdf_qz(self, x):  # NEW
         """Implements the CDF of the 'stretched' concrete distribution"""
         xn = (x - limit_a) / (limit_b - limit_a)
         logits = math.log(xn) - math.log(1 - xn)
@@ -279,23 +291,22 @@ class L0DisjunctionLayer(nn.Module):
         # note: in the paper they call qz_loga -> logaj (better check to make sure i'm not misunderstanding)
         return F.sigmoid(self.qz_loga - self.temperature * math.log(-limit_a / limit_b))
 
-    def quantile_concrete(self, x): # NEW
+    def quantile_concrete(self, x):  # NEW
         """Implements the quantile, aka inverse CDF, of the 'stretched' concrete distribution"""
         y = F.sigmoid((torch.log(x) - torch.log(1 - x) + self.qz_loga) / self.temperature)
         return y * (limit_b - limit_a) + limit_a
 
-    def _reg_w(self): # NEW
+    def _reg_w(self):  # NEW
         """Expected L0 norm under the stochastic gates, takes into account and re-weights also a potential L2 penalty"""
         # logpw_col = torch.sum(- (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba, 1)
         # logpw_col = - (.5 * self.prior_prec * self.weights.pow(2)) - self.lamba
-        #logpw = torch.sum((1 - self.cdf_qz(0))) #* logpw_col)
-        #logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
-        #return logpw + logpb
+        # logpw = torch.sum((1 - self.cdf_qz(0))) #* logpw_col)
+        # logpb = 0 if not self.use_bias else - torch.sum(.5 * self.prior_prec * self.bias.pow(2))
+        # return logpw + logpb
         lc = torch.sum(self.one_minus_cdf_qz0())
         return lc
 
-
-    def regularization(self): # NEW
+    def regularization(self):  # NEW
         return self._reg_w() * self.lamba
 
     def count_expected_flops_and_l0(self):
@@ -311,27 +322,31 @@ class L0DisjunctionLayer(nn.Module):
             expected_l0 += self.out_features
         return expected_flops.item(), expected_l0.item()
 
-    def get_eps(self, size): # NEW
+    def get_eps(self, size):  # NEW
         """Uniform random numbers for the concrete distribution"""
-        eps = self.floatTensor(size).uniform_(epsilon, 1-epsilon)
+        eps = self.floatTensor(size).uniform_(epsilon, 1 - epsilon)
         eps = Variable(eps)
         return eps
 
-    def sample_z(self, batch_size, sample=True): # NEW
+    def sample_z(self, batch_size, sample=True):  # NEW
         """Sample the hard-concrete gates for training and use a deterministic value for testing"""
         if sample:
-            eps = self.get_eps(self.floatTensor(batch_size, self.in_features))
+            eps = self.get_eps(self.floatTensor(batch_size, self.in_features, self.out_features))
             z = self.quantile_concrete(eps)
             return F.hardtanh(z, min_val=0, max_val=1)
         else:  # mode
-            pi = F.sigmoid(self.qz_loga).view(1, self.in_features).expand(batch_size, self.in_features)
+            pi = (F.sigmoid(self.qz_loga)
+                  # .view(1, self.in_features, self.out_features)
+                  # .expand(batch_size, self.in_features, self.out_features)
+                  )
             return F.hardtanh(pi * (limit_b - limit_a) + limit_a, min_val=0, max_val=1)
 
-    def sample_weights(self): # NEW
+    def sample_weights(self):  # NEW
         z = self.quantile_concrete(self.get_eps(self.floatTensor(self.in_features, self.out_features)))
         mask = F.hardtanh(z, min_val=0, max_val=1)
-        self.mask_zero_weights = torch.where(mask == 0, 1, 0).sum() * self.out_features
-        return mask.view(self.in_features, self.out_features) * self.weights
+        self.mask_active_weights = torch.where(mask > 0.0, 1, 0).sum()
+        return mask.view(self.in_features,
+                         self.out_features) * self.weights  # F.hardtanh(self.weights, min_val=0, max_val=1)
 
 
 class L0MLLP(nn.Module):
@@ -364,7 +379,8 @@ class L0MLLP(nn.Module):
     """
 
     def __init__(self, dim_list, device, use_not=False, log_file=None, N=50000, beta_ema=0.999,
-                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3.): # UPDATED
+                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False,
+                 temperature=2. / 3.):  # UPDATED
         """
 
         Parameters
@@ -388,11 +404,11 @@ class L0MLLP(nn.Module):
         else:
             logging.basicConfig(level=logging.INFO, filename=log_file, filemode='w', format=log_format)
 
-        self.N = N # NEW
-        self.beta_ema = beta_ema # NEW
+        self.N = N  # NEW
+        self.beta_ema = beta_ema  # NEW
         # self.weight_decay = self.N * weight_decay # NEW
-        self.weight_decay = weight_decay # NEW
-        self.lamba = lamba # NEW
+        self.weight_decay = weight_decay  # NEW
+        self.lamba = lamba  # NEW
         self.dim_list = dim_list
         self.device = device
         self.use_not = use_not
@@ -401,28 +417,31 @@ class L0MLLP(nn.Module):
         self.disj = []
 
         for i in range(0, len(dim_list) - 2, 2):
-            conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
-            disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], use_not=False, droprate_init=droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
+            conj = L0ConjunctionLayer(dim_list[i], dim_list[i + 1], use_not=use_not,
+                                      droprate_init=droprate_init_input if i == 0 else droprate_init,
+                                      weight_decay=weight_decay,
+                                      lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
+            disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], use_not=False, droprate_init=droprate_init,
+                                      weight_decay=weight_decay,
+                                      lamba=lamba, local_rep=local_rep, temperature=temperature, bias=False)
             self.add_module('conj{}'.format(i), conj)
             self.add_module('disj{}'.format(i), disj)
             self.conj.append(conj)
             self.disj.append(disj)
 
-        self.layers = self.conj + self.disj # NEW
+        self.layers = self.conj + self.disj  # NEW
 
-        if beta_ema > 0.: # NEW
-            print('Using temporal averaging with beta: {}'.format(beta_ema)) # NEW
-            self.avg_param = deepcopy(list(p.data for p in self.parameters())) # NEW
-            if torch.cuda.is_available(): # NEW
-                self.avg_param = [a.cuda() for a in self.avg_param] # NEW
-            self.steps_ema = 0. # NEW
+        if beta_ema > 0.:  # NEW
+            print('Using temporal averaging with beta: {}'.format(beta_ema))  # NEW
+            self.avg_param = deepcopy(list(p.data for p in self.parameters()))  # NEW
+            if torch.cuda.is_available():  # NEW
+                self.avg_param = [a.cuda() for a in self.avg_param]  # NEW
+            self.steps_ema = 0.  # NEW
 
-    def forward(self, x): # UPDATED
+    def forward(self, x):  # UPDATED
         for conj, disj in zip(self.conj, self.disj):
-            x = conj(x) # UPDATED
-            x = disj(x) # UPDATED
+            x = conj(x)  # UPDATED
+            x = disj(x)  # UPDATED
         return x
 
     def binarized_forward(self, x):
@@ -448,15 +467,16 @@ class L0MLLP(nn.Module):
         logging.debug('{}'.format(y[:20]))
         return torch.tensor(X), torch.tensor(y)  # Do not put all the data in GPU at once.
 
-    def regularization(self): # NEW
+    def regularization(self):  # NEW
         regularization = 0.
         for layer in self.layers:
+            # should check whether -1/n?
             regularization += layer.regularization()
         if torch.cuda.is_available():
             regularization = regularization.cuda()
         return regularization
 
-    def get_exp_flops_l0(self): # NEW
+    def get_exp_flops_l0(self):  # NEW
         expected_flops, expected_l0 = 0., 0.
         for layer in self.layers:
             e_fl, e_l0 = layer.count_expected_flops_and_l0()
@@ -464,20 +484,20 @@ class L0MLLP(nn.Module):
             expected_l0 += e_l0
         return expected_flops, expected_l0
 
-    def update_ema(self): # NEW
+    def update_ema(self):  # NEW
         self.steps_ema += 1
         for p, avg_p in zip(self.parameters(), self.avg_param):
             avg_p.mul_(self.beta_ema).add_((1 - self.beta_ema) * p.data)
 
-    def load_ema_params(self): # NEW
+    def load_ema_params(self):  # NEW
         for p, avg_p in zip(self.parameters(), self.avg_param):
-            p.data.copy_(avg_p / (1 - self.beta_ema**self.steps_ema))
+            p.data.copy_(avg_p / (1 - self.beta_ema ** self.steps_ema))
 
-    def load_params(self, params): # NEW
+    def load_params(self, params):  # NEW
         for p, avg_p in zip(self.parameters(), params):
             p.data.copy_(avg_p)
 
-    def get_params(self): # NEW
+    def get_params(self):  # NEW
         params = deepcopy(list(p.data for p in self.parameters()))
         return params
 
@@ -491,8 +511,9 @@ class L0MLLP(nn.Module):
             param_group['lr'] = lr
         return optimizer
 
-    def train(self, X=None, y=None, X_validation=None, y_validation=None, data_loader=None, epoch=50, lr=0.01, lr_decay_epoch=100,
-              lr_decay_rate=0.75, batch_size=64, weight_decay=0.0): # UPDATED
+    def train(self, X=None, y=None, X_validation=None, y_validation=None, data_loader=None, epoch=50, lr=0.01,
+              lr_decay_epoch=100,
+              lr_decay_rate=0.75, batch_size=64, weight_decay=0.0):  # UPDATED
         """
 
         Parameters
@@ -551,13 +572,13 @@ class L0MLLP(nn.Module):
         f1_score = []
         f1_score_b = []
 
-        self.weight_decay = weight_decay # NEW
+        self.weight_decay = weight_decay  # NEW
 
-        criterion = nn.BCELoss() #nn.MSELoss()
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr) # UPDATED
+        criterion = nn.BCELoss()  # nn.MSELoss()
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)  # UPDATED
 
         # define loss function (criterion) and optimizer
-        def loss_function(output, target_var): # NEW
+        def loss_function(output, target_var):  # NEW
             loss = criterion(output, target_var)
             total_loss = loss + self.regularization()
             if torch.cuda.is_available():
@@ -565,16 +586,16 @@ class L0MLLP(nn.Module):
             return total_loss
 
         # Print weigths before training
-        total_weights = 0 # NEW
+        total_weights = 0  # NEW
         for k, layer in enumerate(self.layers):  # NEW
-            total_weights += layer.weights.size()[0] * layer.weights.size()[1]# NEW
-        print(f"Total weights: {total_weights}") # NEW
+            total_weights += layer.weights.size()[0] * layer.weights.size()[1]  # NEW
+        print(f"Total weights: {total_weights}")  # NEW
 
         for epo in tqdm(range(epoch), desc="Epochs"):
             # Print 0 weigths before optimizer step
-            total_zero_weights = 0 # NEW
+            total_zero_weights = 0  # NEW
             for k, layer in enumerate(self.layers):  # NEW
-                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
+                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum()  # NEW
             # print(f"Total 0 weights start: {total_zero_weights}") # NEW
 
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
@@ -586,7 +607,7 @@ class L0MLLP(nn.Module):
                 y = y.to(self.device)
                 optimizer.zero_grad()  # Zero the gradient buffers.
                 y_pred = self.forward(X)
-                loss = loss_function(y_pred, y) # UPDATED
+                loss = loss_function(y_pred, y)  # UPDATED
                 running_loss += loss.item()
                 loss.backward()
                 if epo % 100 == 0 and cnt == 0:
@@ -596,26 +617,26 @@ class L0MLLP(nn.Module):
                 optimizer.step()
 
                 for k, layer in enumerate(self.layers):  # NEW
-                    layer.constrain_parameters() # NEW
+                    layer.constrain_parameters()  # NEW
 
-                if self.beta_ema > 0.: # NEW
-                    self.update_ema() # NEW
+                if self.beta_ema > 0.:  # NEW
+                    self.update_ema()  # NEW
 
                 self.clip()
 
-            # Print mask zero weights
-            total_mask_zero_weights = 0
+            # Print mask active weights
+            total_mask_active_weights = 0
             for k, layer in enumerate(self.layers):  # NEW
-                total_mask_zero_weights += layer.mask_zero_weights # NEW
-            # print(f"Total Mask 0 weights: {total_mask_zero_weights}")
+                total_mask_active_weights += layer.mask_active_weights  # NEW
+            print(f"Total Mask active weights: {total_mask_active_weights}")
 
             # Print 0 weigths after optimizer step
             total_zero_weights = 0
             for k, layer in enumerate(self.layers):  # NEW
-                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum() # NEW
+                total_zero_weights += torch.where(layer.weights == 0, 1, 0).sum()  # NEW
             # print(f"Total 0 weights end epoch: {total_zero_weights}")
 
-            logging.info('epoch: {}, loss: {}'.format(epo, running_loss  / len(data_loader)))
+            logging.info('epoch: {}, loss: {}'.format(epo, running_loss / len(data_loader)))
             print('epoch: {}, loss: {}'.format(epo, running_loss / len(data_loader)))
             loss_log.append(running_loss)
             # Change the set of weights to be binarized every epoch.
@@ -711,13 +732,13 @@ class L0MLLP(nn.Module):
             activation_cnt_list = None
 
         # Get the rules from the top layer to the bottom layer.
-        param_list = list(param for name, param in self.named_parameters() if "weights" in name) # UPDATED
+        param_list = list(param for name, param in self.named_parameters() if "weights" in name)  # UPDATED
         n_param = len(param_list)
         mark = {}
         rules_list = []
         for i in reversed(range(n_param)):
             param = param_list[i]
-            W = param.T.cpu().detach().numpy() # UPDATED
+            W = param.T.cpu().detach().numpy()  # UPDATED
             rules = defaultdict(list)
             num = self.dim_list[i]
             for k, row in enumerate(W):

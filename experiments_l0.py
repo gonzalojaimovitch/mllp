@@ -130,22 +130,22 @@ def experiment(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-d', '--data_set', type=str, default='connect-4',
+    parser.add_argument('-d', '--data_set', type=str, default='tic-tac-toe',
                         help='Set the data set for training. All the data sets in the dataset folder are available.')
     parser.add_argument('-k', '--kfold', type=int, default=5, help='Set the k of K-Folds cross-validation.')
     parser.add_argument('-ki', '--ith_kfold', type=int, default=0, help='Do the i-th validation, 0 <= ki < k.')
     parser.add_argument('--use_validation_set', action="store_true",
                         help='Use the validation set for parameters tuning.', default=True)
     parser.add_argument('-e', '--epoch', type=int, default=401, help='Set the total epoch.')
-    parser.add_argument('-bs', '--batch_size', type=int, default=65, help='Set the batch size.')
-    parser.add_argument('-lr', '--learning_rate', type=float, default=0.01, help='Set the initial learning rate.')
+    parser.add_argument('-bs', '--batch_size', type=int, default=67, help='Set the batch size.')
+    parser.add_argument('-lr', '--learning_rate', type=float, default=0.03, help='Set the initial learning rate.')
     parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=0.75, help='Set the learning rate decay rate.')
     parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=100, help='Set the learning rate decay epoch.')
     parser.add_argument('-wd', '--weight_decay', type=float, default=0.0, help='Set the weight decay (L2 penalty).')
     parser.add_argument('--use_not', action="store_true",
                         help='Use the NOT (~) operator in logical rules. '
                              'It will enhance model capability but make the CRS more complex.')
-    parser.add_argument('-s', '--structure', type=str, default='256', # '64,
+    parser.add_argument('-s', '--structure', type=str, default='64', # '64,
                         help='Set the structure of network. Only the number of nodes in middle layers are needed. '
                              'E.g., 64, 64_32_16. The total number of middle layers should be odd.')
     parser.add_argument('--lamba', type=float, default=0.00001,#1,
