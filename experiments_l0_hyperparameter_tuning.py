@@ -312,6 +312,10 @@ if __name__ == '__main__':
                         help='Name of the Wandb project')
     parser.add_argument('-ht', '--hyperparameter_tuning',action="store_true",
                         help='Whether a hyperparameter tuning will be or not performed')
+    parser.add_argument('--num_cpu', type=int,
+                        help='Num of cpus dedicated for hyperparameter tuning', default=multiprocessing.cpu_count())
+    parser.add_argument('--num_gpu', type=int,
+                        help='Num of gpus dedicated for hyperparameter tuning', default=torch.cuda.device_count())
     parser.add_argument('-d', '--data_set', type=str,
                         help='Set the data set for training. All the data sets in the dataset folder are available.')
     parser.add_argument('-k', '--kfold', type=int, default=argparse.SUPPRESS, help='Set the k of K-Folds cross-validation.')
@@ -397,7 +401,7 @@ if __name__ == '__main__':
     info_path = os.path.join(os.path.join(os.path.dirname(__file__), DATA_DIR), args.data_set + '.info')
 
     if args.hyperparameter_tuning:
-        trainable_with_cpu_gpu = tune.with_resources(partial(experiment, data_path=data_path, info_path=info_path), {"cpu": multiprocessing.cpu_count(), "gpu": torch.cuda.device_count()})
+        trainable_with_cpu_gpu = tune.with_resources(partial(experiment, data_path=data_path, info_path=info_path), {"cpu": args.num_cpu, "gpu": args.num_gpu})
         tuner = tune.Tuner(trainable_with_cpu_gpu,
                         tune_config=tune.TuneConfig(
                                     num_samples=args.num_samples

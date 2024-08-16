@@ -812,6 +812,10 @@ class L0MLLP(nn.Module):
         
         self.eval()
         with torch.no_grad():
+            if self.beta_ema > 0:
+                old_params = self.get_params()
+                self.load_ema_params()
+
             X = X.to(self.device)
             test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False, num_workers=multiprocessing.cpu_count(), pin_memory=True)
 
@@ -846,6 +850,9 @@ class L0MLLP(nn.Module):
 
             f1_score = metrics.f1_score(y, y_pred, average='macro')
             f1_score_b = metrics.f1_score(y, y_pred_b, average='macro')
+
+            if self.beta_ema > 0:
+                self.load_params(old_params)
         return accuracy, accuracy_b, f1_score, f1_score_b
 
     def detect_dead_node(self, X, need_transform=True):
