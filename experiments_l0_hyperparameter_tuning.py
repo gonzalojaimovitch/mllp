@@ -293,10 +293,10 @@ if __name__ == '__main__':
         "use_not": False,
         "local_rep": False,
         "group_l0": True,
-        "learning_rate": 0.05,
+        "learning_rate": 5 * 10**-3 ,
         "lr_decay_rate": 0.75,
         "lr_decay_epoch": 100,
-        "weight_decay": 10e-8,
+        "weight_decay": 10**-8,
         "lamba": 1.0,
         "droprate_init_input": 0.2,
         "droprate_init": 0.5,
@@ -363,7 +363,7 @@ if __name__ == '__main__':
 
     # set seed
     torch.manual_seed(0)
-    # np.random.seed(0) # Commented to allow different runs of Ray Tuner different hyperparameters
+    np.random.seed(0)
     
     args = parser.parse_args()
 
@@ -383,6 +383,7 @@ if __name__ == '__main__':
         "N": args.N if hasattr(args, "N") else default["N"],
         "use_not": args.use_not if args.use_not else default["use_not"],
         "group_l0": args.group_l0 if args.group_l0 else default["group_l0"],
+        "local_rep": args.local_rep if args.local_rep else default["local_rep"],
         "beta_ema": args.beta_ema if hasattr(args, "beta_ema") else default["beta_ema"], # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
         "use_bias": args.use_bias if args.use_bias else default["use_bias"],
         "structure": args.structure if hasattr(args, "structure") else (default["structure"] if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"])),
@@ -393,7 +394,6 @@ if __name__ == '__main__':
         "lamba": args.lamba if hasattr(args, "lamba") else (default["lamba"] if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5)),
         "droprate_init_input": args.droprate_init_input if hasattr(args, "droprate_init_input") else (default["droprate_init_input"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
         "droprate_init": args.droprate_init if hasattr(args, "droprate_init") else (default["droprate_init"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
-        "local_rep": args.local_rep if args.local_rep else (default["local_rep"] if not args.hyperparameter_tuning else tune.choice([True, False])),
         "temperature": args.temperature if hasattr(args, "temperature") else (default["temperature"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
     }
 

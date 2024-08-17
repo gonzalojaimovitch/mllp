@@ -817,7 +817,7 @@ class L0MLLP(nn.Module):
                 self.load_ema_params()
 
             X = X.to(self.device)
-            test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False, num_workers=multiprocessing.cpu_count(), pin_memory=True)
+            test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False)
 
             y = y.cpu().numpy().astype(int)
             y = np.argmax(y, axis=1)
