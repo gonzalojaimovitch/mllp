@@ -520,6 +520,8 @@ class L0MLLP(nn.Module):
         self.conj = []
         self.disj = []
 
+        print(f"N value: '{N}'")
+
         for i in range(0, len(dim_list) - 2, 2):
             conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], random_binarization_rate, use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
                                lamba=lamba, local_rep=local_rep, temperature=temperature, bias=use_bias, group_l0=group_l0)
@@ -769,6 +771,7 @@ class L0MLLP(nn.Module):
             total_mask_active_weights = self.get_mask_active_weights() # NEW
             total_active_weights = self.get_active_weights() # NEW
             total_mask_fully_active_weights = self.get_mask_fully_active_weights() # NEW
+            print(f"Total mask active weights: '{total_mask_active_weights}'")
 
 
             logging.info('epoch: {}, loss: {}'.format(epo, running_loss  / len(data_loader)))
