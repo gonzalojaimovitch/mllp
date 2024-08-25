@@ -175,7 +175,6 @@ def experiment(args, data_path, info_path):
                 lamba=args.lamba,
                 droprate_init_input=args.droprate_init_input,
                 droprate_init=args.droprate_init,
-                local_rep=args.local_rep,
                 temperature=args.temperature,
                 group_l0=args.group_l0,
                 use_bias=args.use_bias)
@@ -190,8 +189,7 @@ def experiment(args, data_path, info_path):
             batch_size=args.batch_size,
             epoch=args.epoch,
             lr_decay_rate=args.lr_decay_rate,
-            lr_decay_epoch=args.lr_decay_epoch,
-            weight_decay=args.weight_decay)
+            lr_decay_epoch=args.lr_decay_epoch)
         loss_ikf.append(loss_log)
         accuracy_ikf.append(accuracy)
         accuracy_b_ikf.append(accuracy_b)
@@ -291,7 +289,6 @@ if __name__ == '__main__':
         "random_binarization_rate": 0.75,
         "N": None,
         "use_not": False,
-        "local_rep": False,
         "group_l0": True,
         "learning_rate": 5 * 10**-3 ,
         "lr_decay_rate": 0.75,
@@ -332,8 +329,6 @@ if __name__ == '__main__':
     parser.add_argument('--use_not', action="store_true",
                         help='Use the NOT (~) operator in logical rules.'
                              'It will enhance model capability but make the CRS more complex.')
-    parser.add_argument('--local_rep', action="store_true",
-                        help='L0 local_rep parameter')
     parser.add_argument('--group_l0', action="store_true",
                         help='L0 group_l0 parameter')
     parser.add_argument('--use_bias', action="store_true",
@@ -383,7 +378,6 @@ if __name__ == '__main__':
         "N": args.N if hasattr(args, "N") else default["N"],
         "use_not": args.use_not if args.use_not else default["use_not"],
         "group_l0": args.group_l0 if args.group_l0 else default["group_l0"],
-        "local_rep": args.local_rep if args.local_rep else default["local_rep"],
         "beta_ema": args.beta_ema if hasattr(args, "beta_ema") else default["beta_ema"], # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
         "use_bias": args.use_bias if args.use_bias else default["use_bias"],
         "structure": args.structure if hasattr(args, "structure") else (default["structure"] if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"])),

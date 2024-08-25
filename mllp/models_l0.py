@@ -66,29 +66,7 @@ class RandomBinarizationLayer(nn.Module):
 class L0ConjunctionLayer(nn.Module):
     """The conjunction layer is used to learn the rules."""
 
-    """Adaptation to L0 Reg:
-
-    - Add L0 functions: reset_parameters, constrain_parameters, cdf_qz, quantile_concrete, _reg_w, regularization, count_expected_flops_and_l0, get_eps, sample_z, sample_weights
-
-    __init__
-    - Change "n" for "out_features" for compatibility with the L0 functions
-    - Change "input_dim" for "out_features" for compatibility with the L0 functions
-    - Change "W" for "weights" for compatibility with the L0 functions. The initialization is also updated to the L0 repo one (Kaiming). Note that the weights are transposed in comparison to the original MLLP implementation.
-    - Include "bias", "weight_decay", "droprate_init", "temperature", "lamba", "local_rep", "**kwargs"
-
-    forward
-    - Add L0 Weight Sampling
-    - Change "x" for "input" as argument for the adaptation
-    - Change "x" for "processed_input" in the activation for the adaptation (now the logit is obtained after sampling weights)
-
-    binarized_forward
-    - Change W for weights for L0 compatibility
-
-    reset_parameters
-    - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
-    """
-
-    def __init__(self, in_features, out_features, random_binarization_rate, use_not=False, bias=False, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=0.1, local_rep=False, group_l0= False, **kwargs): # UPDATED
+    def __init__(self, in_features, out_features, random_binarization_rate, use_not=False, bias=False, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=0.1, group_l0= False, **kwargs): # UPDATED
         super(L0ConjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
@@ -108,7 +86,6 @@ class L0ConjunctionLayer(nn.Module):
         self.droprate_init = droprate_init # NEW
         self.lamba = lamba # NEW
         self.use_bias = False # NEW
-        self.local_rep = local_rep # NEW
         if bias: # NEW
             self.bias = Parameter(torch.Tensor(out_features)) # NEW
             self.use_bias = True # NEW
@@ -134,8 +111,8 @@ class L0ConjunctionLayer(nn.Module):
             # output = input.mm(weights) # NEW
         weights = self.randomly_binarize_layer(weights) if randomly_binarize else weights # UPDATED
         output = torch.prod((1 - (1 - processed_input)[:, :, None] * weights[None, :, :]), dim=1) # NEW
-        if self.use_bias: # NEW
-            output.add_(self.bias) # NEW
+        # if self.use_bias: # NEW
+        #     output.add_(self.bias) # NEW
         return output
 
     def binarized_forward(self, x): # UPDATED
@@ -263,28 +240,7 @@ class L0ConjunctionLayer(nn.Module):
 class L0DisjunctionLayer(nn.Module):
     """The disjunction layer is used to learn the rule sets."""
 
-    """Adaptation to L0 Reg:
-
-    - Add L0 functions: reset_parameters, constrain_parameters, cdf_qz, quantile_concrete, _reg_w, regularization, count_expected_flops_and_l0, get_eps, sample_z, sample_weights
-
-    __init__
-    - Change "n" for "out_features" for compatibility with the L0 functions
-    - Change "input_dim" for "out_features" for compatibility with the L0 functions
-    - Change "W" for "weights" for compatibility with the L0 functions. The initialization is also updated to the L0 repo one (Kaiming). Note that the weights are transposed in comparison to the original MLLP implementation.
-    - Include "bias", "weight_decay", "droprate_init", "temperature", "lamba", "local_rep", "**kwargs"
-
-    forward
-    - Add L0 Weight Sampling
-    - Change "x" for "input" as argument for the adaptation
-    - Change "x" for "processed_input" in the activation for the adaptation (now the logit is obtained after sampling weights)
-
-    binarized_forward
-    - Change W for weights for L0 compatibility
-
-    reset_parameters
-    - Comment Kaiming initialization since the weights are initialized as in the MLLP repo
-    """
-    def __init__(self, in_features, out_features, random_binarization_rate, use_not=False, bias=False, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=1., local_rep=False, group_l0=False, **kwargs): # UPDATED
+    def __init__(self, in_features, out_features, random_binarization_rate, use_not=False, bias=False, weight_decay=1., droprate_init=0.5, temperature=2./3., lamba=1., group_l0=False, **kwargs): # UPDATED
         super(L0DisjunctionLayer, self).__init__()
         self.use_not = use_not
         self.node_activation_cnt = None
@@ -304,7 +260,6 @@ class L0DisjunctionLayer(nn.Module):
         self.droprate_init = droprate_init # NEW
         self.lamba = lamba # NEW
         self.use_bias = False # NEW
-        self.local_rep = local_rep # NEW
         if bias: # NEW
             self.bias = Parameter(torch.Tensor(out_features)) # NEW
             self.use_bias = True # NEW
@@ -330,8 +285,8 @@ class L0DisjunctionLayer(nn.Module):
             # output = input.mm(weights) # NEW
         weights = self.randomly_binarize_layer(weights) if randomly_binarize else weights # UPDATED
         output = 1 - torch.prod(1 - processed_input[:, :, None] * weights[None, :, :], dim=1) # UPDATED
-        if self.use_bias: # NEW
-            output.add_(self.bias) # NEW
+        # if self.use_bias: # NEW
+        #     output.add_(self.bias) # NEW
         return output
 
     def binarized_forward(self, x): # UPDATED
@@ -456,29 +411,9 @@ class L0MLLP(nn.Module):
     For more information, please read our paper: Transparent Classification with Multilayer Logical Perceptrons and
     Random Binarization."""
 
-    """
-    L0 Adaptation Reg:
-    __init__
-    - Use L0ConjunctionLayer and L0DisjunctionLayer
-    - Fixed Lamba to 1.0 (the original repo seems to pass an array with the value for each layer, but by default is 1.0)
-
-    forward
-
-    train
-    - Remove Weight Decay from Adam (to imitate the L0 repo, that apparently includes this in the regularization function)
-    - Include "loss_function" to include L0 Regularization (that includes itself the Weight Decay)
-    - Add "layers" attribute
-    - Add regularization, update_ema, load_ema_params, load_params and get_params functions
-    - Add N, beta_ema, weight_decay, lambas, local_rep and temperature
-    - Add constrain parameters and update ema after each batch
-
-    get_rules
-    - Transpose weights (since they were transposed to match the L0 implementation)
-    - Consider only the "weights" parameters
-    """
 
     def __init__(self, dim_list, device, random_binarization_rate=0.75, use_not=False, log_file=None, N=50000, beta_ema=0.999,
-                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, local_rep=False, temperature=2./3., group_l0=False, use_bias=False): # UPDATED
+                 weight_decay=1, lamba=0.1, droprate_init_input=0.2, droprate_init=0.5, temperature=2./3., group_l0=False, use_bias=False): # UPDATED
         """
 
         Parameters
@@ -508,14 +443,17 @@ class L0MLLP(nn.Module):
         self.random_binarization_rate = random_binarization_rate
         self.N = N # NEW
         self.beta_ema = beta_ema # NEW
-        # self.weight_decay = self.N * weight_decay # NEW
-        self.weight_decay = weight_decay # NEW
+        self.weight_decay = self.N * weight_decay # NEW
+        # self.weight_decay = weight_decay # NEW
         self.lamba = lamba # NEW
+        self.temperature = temperature # NEW
+        self.droprate_init_input = droprate_init_input # NEW
+        self.droprate_init = droprate_init # NEW
         self.dim_list = dim_list
         self.device = device
         self.use_not = use_not
-        self.use_bias = use_bias
-        self.group_l0 = group_l0
+        self.use_bias = use_bias # NEW
+        self.group_l0 = group_l0 # NEW
         self.enc = None
         self.conj = []
         self.disj = []
@@ -523,10 +461,10 @@ class L0MLLP(nn.Module):
         print(f"N value: '{N}'")
 
         for i in range(0, len(dim_list) - 2, 2):
-            conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], random_binarization_rate, use_not=use_not, droprate_init=droprate_init_input if i == 0 else droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=use_bias, group_l0=group_l0)
-            disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], random_binarization_rate, use_not=False, droprate_init=droprate_init, weight_decay=weight_decay,
-                               lamba=lamba, local_rep=local_rep, temperature=temperature, bias=use_bias, group_l0=group_l0)
+            conj = L0ConjunctionLayer(dim_list[i], dim_list[i+1], self.random_binarization_rate, use_not=self.use_not, droprate_init=self.droprate_init_input if i == 0 else self.droprate_init, weight_decay=self.weight_decay,
+                               lamba=self.lamba, temperature=self.temperature, bias=self.use_bias, group_l0=self.group_l0)
+            disj = L0DisjunctionLayer(dim_list[i + 1], dim_list[i + 2], self.random_binarization_rate, use_not=False, droprate_init=self.droprate_init, weight_decay=self.weight_decay,
+                               lamba=self.lamba, temperature=self.temperature, bias=self.use_bias, group_l0=self.group_l0)
             self.add_module('conj{}'.format(i), conj)
             self.add_module('disj{}'.format(i), disj)
             self.conj.append(conj)
@@ -651,7 +589,7 @@ class L0MLLP(nn.Module):
         return optimizer
 
     def train_model(self, X=None, y=None, X_validation=None, y_validation=None, data_loader=None, epoch=50, lr=0.01, lr_decay_epoch=100,
-              lr_decay_rate=0.75, batch_size=64, weight_decay=0.0): # UPDATED
+              lr_decay_rate=0.75, batch_size=64): # UPDATED
         """
 
         Parameters
@@ -719,8 +657,6 @@ class L0MLLP(nn.Module):
         total_active_weights_list = []
         total_mask_fully_active_weights_list = []
 
-        self.weight_decay = weight_decay # NEW
-
         # criterion = nn.BCELoss()
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr) # UPDATED
@@ -736,11 +672,12 @@ class L0MLLP(nn.Module):
         # Get total weights
         total_weights = self.get_total_weights()
 
-
         for epo in tqdm(range(epoch), desc="Epochs"):
 
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
                                               lr_decay_epoch=lr_decay_epoch)
+            
+            num_examples = 0
             running_loss = 0.0
             cnt = 0
             for X, y in data_loader:
@@ -749,7 +686,8 @@ class L0MLLP(nn.Module):
                 optimizer.zero_grad()  # Zero the gradient buffers.
                 y_pred = self.forward(X, randomly_binarize=True if self.random_binarization_rate > 0.0 else False)
                 loss = loss_function(y_pred, y) # UPDATED
-                running_loss += loss.item()
+                running_loss += (loss.item() * X.size(0))
+                num_examples += X.size(0)
                 loss.backward()
                 if epo % 100 == 0 and cnt == 0:
                     for param in self.parameters():
@@ -774,9 +712,9 @@ class L0MLLP(nn.Module):
             print(f"Total mask active weights: '{total_mask_active_weights}'")
 
 
-            logging.info('epoch: {}, loss: {}'.format(epo, running_loss  / len(data_loader)))
-            print('epoch: {}, loss: {}'.format(epo, running_loss / len(data_loader)))
-            loss_log.append(running_loss)
+            logging.info('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
+            print('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
+            loss_log.append(running_loss / num_examples)
             total_mask_active_weights_list.append(total_mask_active_weights) # NEW
             total_active_weights_list.append(total_active_weights) # NEW
             total_mask_fully_active_weights_list.append(total_mask_fully_active_weights) # NEW
