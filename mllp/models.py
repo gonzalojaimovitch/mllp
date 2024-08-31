@@ -78,6 +78,11 @@ class ConjunctionLayer(nn.Module):
             Wb = torch.where(self.W > THRESHOLD, torch.ones_like(self.W), torch.zeros_like(self.W)).type(torch.int)
             return torch.prod((1 - (1 - x)[:, :, None] * Wb.t()[None, :, :]), dim=1)
 
+    def get_active_weights(self): # NEW
+        return torch.where(self.W > 0, 1, 0).sum().item()
+
+    def get_fully_active_weights(self): # NEW
+        return torch.where(self.W == 1, 1, 0).sum().item()
 
 class DisjunctionLayer(nn.Module):
     """The disjunction layer is used to learn the rule sets."""
@@ -108,6 +113,12 @@ class DisjunctionLayer(nn.Module):
             x = x.type(torch.int)
             Wb = torch.where(self.W > THRESHOLD, torch.ones_like(self.W), torch.zeros_like(self.W)).type(torch.int)
             return 1 - torch.prod(1 - x[:, :, None] * Wb.t()[None, :, :], dim=1)
+
+    def get_active_weights(self): # NEW
+        return torch.where(self.W > 0, 1, 0).sum().item()
+
+    def get_fully_active_weights(self): # NEW
+        return torch.where(self.W == 1, 1, 0).sum().item()
 
 
 class MLLP(nn.Module):
@@ -171,6 +182,27 @@ class MLLP(nn.Module):
                 x = disj.binarized_forward(x)
         return x
 
+    def get_active_weights(self): # NEW
+        active_weights = 0
+        for conj, disj in zip(self.conj, self.disj):
+            active_weights += conj.get_active_weights()
+            active_weights += disj.get_active_weights()
+        return active_weights
+
+    def get_fully_active_weights(self): # NEW
+        fully_active_weights = 0
+        for conj, disj in zip(self.conj, self.disj):
+            fully_active_weights += conj.get_fully_active_weights()
+            fully_active_weights += disj.get_fully_active_weights()
+        return fully_active_weights
+
+    def get_total_weights(self): # NEW
+        total_weights = 0
+        for layer in self.layers:
+            total_weights += (layer.W.size()[0] * layer.W.size()[1])
+        
+        return total_weights
+
     def clip(self):
         """Clip the weights into the range [0, 1]."""
         for param in self.parameters():
@@ -205,7 +237,7 @@ class MLLP(nn.Module):
             param_group['lr'] = lr
         return optimizer
 
-    def train(self, X=None, y=None, X_validation=None, y_validation=None, data_loader=None, epoch=50, lr=0.01, lr_decay_epoch=100,
+    def train_model(self, X=None, y=None, X_validation=None, y_validation=None, data_loader=None, epoch=50, lr=0.01, lr_decay_epoch=100,
               lr_decay_rate=0.75, batch_size=64, weight_decay=0.0):
         """
 
@@ -249,6 +281,8 @@ class MLLP(nn.Module):
 
         """
 
+        self.train()
+
         if (X is None or y is None) and data_loader is None:
             raise Exception("Both data set and data loader are unavailable.")
         if data_loader is None:
@@ -262,12 +296,23 @@ class MLLP(nn.Module):
         accuracy_b = []
         f1_score = []
         f1_score_b = []
+        accuracy_v = [] if X_validation is not None and y_validation is not None else None
+        accuracy_v_b = [] if X_validation is not None and y_validation is not None else None
+        f1_score_v = [] if X_validation is not None and y_validation is not None else None
+        f1_score_v_b = [] if X_validation is not None and y_validation is not None else None
+        total_active_weights_list = []
+        total_fully_active_weights_list = []
 
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
+
+        # Get total weights
+        total_weights = self.get_total_weights()
+
         for epo in tqdm(range(epoch)):
             optimizer = self.exp_lr_scheduler(optimizer, epo, init_lr=lr, lr_decay_rate=lr_decay_rate,
                                               lr_decay_epoch=lr_decay_epoch)
+            num_examples = 0
             running_loss = 0.0
             cnt = 0
             for X, y in data_loader:
@@ -276,7 +321,8 @@ class MLLP(nn.Module):
                 optimizer.zero_grad()  # Zero the gradient buffers.
                 y_pred = self.forward(X, randomly_binarize=True)
                 loss = criterion(y_pred, y)
-                running_loss += loss.item()
+                running_loss += (loss.item() * X.size(0))
+                num_examples += X.size(0)
                 loss.backward()
                 if epo % 100 == 0 and cnt == 0:
                     for param in self.parameters():
@@ -284,19 +330,24 @@ class MLLP(nn.Module):
                     cnt += 1
                 optimizer.step()
                 self.clip()
-            logging.info('epoch: {}, loss: {}'.format(epo, running_loss))
-            loss_log.append(running_loss)
+            logging.info('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
+            print('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
+            loss_log.append(running_loss / num_examples)
             # Change the set of weights to be binarized every epoch.
             self.randomly_binarize_layer_refresh()
+
+            total_active_weights_list.append(total_active_weights) # NEW
+            total_fully_active_weights_list.append(total_fully_active_weights) # NEW
 
             # Test the validation set or training set every 5 epochs.
             if epo % 5 == 0:
                 if X_validation is not None and y_validation is not None:
-                    acc, acc_b, f1, f1_b = self.test(X_validation, y_validation, False)
+                    acc_v, acc_v_b, f1_v, f1_v_b = self.test(X_validation, y_validation, False)
                     set_name = 'Validation'
                 else:
-                    acc, acc_b, f1, f1_b = self.test(X, y, False)
-                    set_name = 'Training'
+                    acc_v, acc_v_b, f1_v, f1_v_b = self.test(X, y, False)
+                acc, acc_b, f1, f1_b = self.test(X, y, False)
+                set_name = 'Training'
                 logging.info('-' * 60)
                 logging.info('On {} Set:\n\tAccuracy of MLLP Model: {}'
                              '\n\tAccuracy of CRS  Model: {}'.format(set_name, acc, acc_b))
@@ -307,11 +358,18 @@ class MLLP(nn.Module):
                 accuracy_b.append(acc_b)
                 f1_score.append(f1)
                 f1_score_b.append(f1_b)
-        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b
+                if X_validation is not None and y_validation is not None:
+                    accuracy_v.append(acc_v)
+                    accuracy_v_b.append(acc_v_b)
+                    f1_score_v.append(f1_v)
+                    f1_score_v_b.append(f1_v_b)
+        return loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_active_weights_list, total_fully_active_weights_list, total_weights
 
     def test(self, X, y, need_transform=True):
         if need_transform:
             X, y = self.data_transform(X, y)
+
+        self.eval()
         with torch.no_grad():
             X = X.to(self.device)
             test_loader = DataLoader(TensorDataset(X), batch_size=128, shuffle=False)
@@ -513,3 +571,5 @@ class MLLP(nn.Module):
                 print('{}:'.format(k), file=file)
                 for r in v:
                     print('\t', r, file=file)
+
+        return rules_list

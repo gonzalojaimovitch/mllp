@@ -828,12 +828,17 @@ class L0MLLP(nn.Module):
 
         # Get the rules from the top layer to the bottom layer.
         param_list = list(param for name, param in self.named_parameters() if "weights" in name) # UPDATED
+        z_list = []
+        for conj, disj in zip(self.conj, self.disj): # NEW
+            z_list.append(conj.sample_z(1, sample=False))
+            z_list.append(disj.sample_z(1, sample=False))
         n_param = len(param_list)
         mark = {}
         rules_list = []
         for i in reversed(range(n_param)):
             param = param_list[i]
             W = param.T.cpu().detach().numpy() # UPDATED
+            z = z_list[i][0].cpu().detach().numpy() # NEW
             rules = defaultdict(list)
             num = self.dim_list[i]
             for k, row in enumerate(W):
@@ -842,10 +847,10 @@ class L0MLLP(nn.Module):
                 if X is not None and activation_cnt_list[i + 1][k] < 1:
                     continue
                 found = False
-                for j, wj in enumerate(row):
+                for j, (wj, zj) in enumerate(zip(row, z)):
                     if X is not None and activation_cnt_list[i][j % num] < 1:
                         continue
-                    if wj > THRESHOLD_W:
+                    if wj > THRESHOLD_W and zj > THRESHOLD_Z:
                         rules[k].append(j)
                         mark[(i - 1, j % num)] = 1
                         found = True
@@ -960,3 +965,5 @@ class L0MLLP(nn.Module):
                 print('{}:'.format(k), file=file)
                 for r in v:
                     print('\t', r, file=file)
+
+        return rules_list

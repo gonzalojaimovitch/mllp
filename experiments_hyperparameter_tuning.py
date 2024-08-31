@@ -20,7 +20,8 @@ from ray.train import RunConfig
 from ray.air.integrations.wandb import WandbLoggerCallback, setup_wandb
 
 from mllp.utils import read_csv, DBEncoder
-from mllp.models_l0 import L0MLLP
+from mllp.models import MLLP
+
 
 DATA_DIR = 'dataset'
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -117,11 +118,10 @@ def experiment(args, data_path, info_path):
     test_accuracy_b_ikf = []
     test_f1_score_ikf = []
     test_f1_score_b_ikf = []
-    total_mask_active_weights_list_ikf = []
     total_active_weights_list_ikf = []
-    total_mask_fully_active_weights_list_ikf = []
-    total_rules_sizes_ikf = []
+    total_fully_active_weights_list_ikf = []
     k_run_time = []
+    total_rules = []
 
     for ikf in range(args.kfold):
         start = time.time()
@@ -164,23 +164,14 @@ def experiment(args, data_path, info_path):
             y_validation = None
 
         net_structure = [len(X_fname)] + list(map(int, args.structure.split('_'))) + [len(y_fname)]
-        net = L0MLLP(net_structure,
+        net = MLLP(net_structure,
                 device=device,
                 random_binarization_rate=args.random_binarization_rate,
                 use_not=args.use_not,
-                log_file=None,
-                N=args.N if args.N is not None else len(X_train_df),
-                beta_ema=args.beta_ema,
-                weight_decay=args.weight_decay,
-                lamba=args.lamba,
-                droprate_init_input=args.droprate_init_input,
-                droprate_init=args.droprate_init,
-                temperature=args.temperature,
-                group_l0=args.group_l0,
-                use_bias=args.use_bias)
+                log_file=None)
         net.to(device)
 
-        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_mask_active_weights_list, total_active_weights_list, total_mask_fully_active_weights_list, total_weights = net.train_model(
+        loss_log, accuracy, accuracy_b, f1_score, f1_score_b, accuracy_v, accuracy_v_b, f1_score_v, f1_score_v_b, total_active_weights_list, total_fully_active_weights_list, total_weights = net.train_model(
             X_train,
             y_train,
             X_validation=X_validation,
@@ -189,7 +180,8 @@ def experiment(args, data_path, info_path):
             batch_size=args.batch_size,
             epoch=args.epoch,
             lr_decay_rate=args.lr_decay_rate,
-            lr_decay_epoch=args.lr_decay_epoch)
+            lr_decay_epoch=args.lr_decay_epoch,
+            weight_decay=args.weight_decay)
         loss_ikf.append(loss_log)
         accuracy_ikf.append(accuracy)
         accuracy_b_ikf.append(accuracy_b)
@@ -199,9 +191,8 @@ def experiment(args, data_path, info_path):
         accuracy_v_b_ikf.append(accuracy_v_b)
         f1_score_v_ikf.append(f1_score_v)
         f1_score_v_b_ikf.append(f1_score_v_b)
-        total_mask_active_weights_list_ikf.append(total_mask_active_weights_list)
         total_active_weights_list_ikf.append(total_active_weights_list)
-        total_mask_fully_active_weights_list_ikf.append(total_mask_fully_active_weights_list)
+        total_fully_active_weights_list_ikf.append(total_fully_active_weights_list)
 
         plot_loss(args, loss_log, accuracy, accuracy_b, f1_score, f1_score_b)
 
@@ -215,6 +206,8 @@ def experiment(args, data_path, info_path):
         test_accuracy_b_ikf.append(acc_b)
         test_f1_score_ikf.append(f1)
         test_f1_score_b_ikf.append(f1_b)
+
+        net.get_final_rules()
 
         with open(args.crs_file, 'w') as f:
             rules_list = net.concept_rule_set_print(X_train, X_fname, y_fname, f)
@@ -245,15 +238,12 @@ def experiment(args, data_path, info_path):
         report_dict = {"epoch": i}
         report_dict.update({"loss_avg": statistics.mean([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"loss_sd": statistics.stdev([loss_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_active_weights_avg": statistics.mean([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_active_weights_sd": statistics.stdev([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"total_active_weights_avg": statistics.mean([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"total_active_weights_sd": statistics.stdev([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_fully_active_weights_avg": statistics.mean([total_mask_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_fully_active_weights_sd": statistics.stdev([total_mask_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
-        report_dict.update({"total_mask_active_weights_%_avg": statistics.mean([total_mask_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
+        report_dict.update({"total_fully_active_weights_avg": statistics.mean([total_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
+        report_dict.update({"total_fully_active_weights_sd": statistics.stdev([total_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)])})
         report_dict.update({"total_active_weights_%_avg": statistics.mean([total_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
-        report_dict.update({"total_mask_fully_active_weights_%_avg": statistics.mean([total_mask_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
+        report_dict.update({"total_fully_active_weights_%_avg": statistics.mean([total_fully_active_weights_list_ikf[ikf][i] for ikf in range(args.kfold)]) / total_weights})
         if i % 5 == 0:
             report_dict.update({"train_accuracy_kf_avg": statistics.mean([accuracy_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
                                 "train_accuracy_b_kf_avg": statistics.mean([accuracy_b_ikf[ikf][int(i / 5)] for ikf in range(args.kfold)]), 
@@ -303,20 +293,12 @@ if __name__ == '__main__':
         "batch_size": 128,
         "num_samples": 1,
         "random_binarization_rate": 0.75,
-        "N": None,
         "use_not": False,
-        "group_l0": True,
         "learning_rate": 5 * 10**-3 ,
         "lr_decay_rate": 0.75,
         "lr_decay_epoch": 100,
         "weight_decay": 10**-8,
-        "lamba": 1.0,
-        "droprate_init_input": 0.2,
-        "droprate_init": 0.5,
-        "beta_ema": 0.999,
-        "temperature": 2./3.,
-        "structure": '64',
-        "use_bias": False
+        "structure": '64'
     }
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -340,31 +322,15 @@ if __name__ == '__main__':
     parser.add_argument('-ns', '--num_samples', type=int, default=argparse.SUPPRESS, help='Number of samples for the hyperparameter tuning search')
     parser.add_argument('-p', '--random_binarization_rate',  type=float, default=argparse.SUPPRESS,
                         help='Random Binarization Rate for MLLP')
-    parser.add_argument('-N', type=int, default=argparse.SUPPRESS,
-                        help='L0 N parameter')
     parser.add_argument('--use_not', action="store_true",
                         help='Use the NOT (~) operator in logical rules.'
                              'It will enhance model capability but make the CRS more complex.')
-    parser.add_argument('--group_l0', action="store_true",
-                        help='L0 group_l0 parameter')
-    parser.add_argument('--use_bias', action="store_true",
-                        help='L0 use_bias parameter')
 
     # Arguments that will be passed or set up by the tuner
     parser.add_argument('-lr', '--learning_rate', type=float, default=argparse.SUPPRESS, help='Set the initial learning rate.')
     parser.add_argument('-lrdr', '--lr_decay_rate', type=float, default=argparse.SUPPRESS, help='Set the learning rate decay rate.')
     parser.add_argument('-lrde', '--lr_decay_epoch', type=int, default=argparse.SUPPRESS, help='Set the learning rate decay epoch.')
     parser.add_argument('-wd', '--weight_decay', type=float, default=argparse.SUPPRESS, help='Set the weight decay (L2 penalty).')
-    parser.add_argument('--lamba', type=float, default=argparse.SUPPRESS,#1,
-                        help='L0 Lamba parameter')
-    parser.add_argument('--droprate_init_input', type=float, default=argparse.SUPPRESS,
-                        help='L0 droprate_init_input parameter')
-    parser.add_argument('--droprate_init', type=float, default=argparse.SUPPRESS,
-                        help='L0 droprate_init parameter')
-    parser.add_argument('--beta_ema', type=float, default=argparse.SUPPRESS,
-                        help='L0 beta_ema parameter')
-    parser.add_argument('--temperature', type=float, default=argparse.SUPPRESS,
-                        help='L0 temperature parameter')
     parser.add_argument('-s', '--structure', type=str, default=argparse.SUPPRESS,
                         help='Set the structure of network. Only the number of nodes in middle layers are needed. '
                              'E.g., 64, 64_32_16. The total number of middle layers should be odd.')
@@ -391,20 +357,12 @@ if __name__ == '__main__':
         "batch_size": args.batch_size if hasattr(args, "batch_size") else default["batch_size"],
         "num_samples": args.num_samples if hasattr(args, "num_samples") else default["num_samples"],
         "random_binarization_rate": args.random_binarization_rate if hasattr(args, "random_binarization_rate") else default["random_binarization_rate"],
-        "N": args.N if hasattr(args, "N") else default["N"],
         "use_not": args.use_not if args.use_not else default["use_not"],
-        "group_l0": args.group_l0 if args.group_l0 else default["group_l0"],
-        "beta_ema": args.beta_ema if hasattr(args, "beta_ema") else default["beta_ema"], # if not args.hyperparameter_tuning else tune.quniform(0.05, 0.999, 0.001),
-        "use_bias": args.use_bias if args.use_bias else default["use_bias"],
         "structure": args.structure if hasattr(args, "structure") else (default["structure"] if not args.hyperparameter_tuning else tune.choice(["32", "64", "128", "256", "32_32_32", "64_64_64", "128_128_128", "256_256_256"])),
         "learning_rate": args.learning_rate if hasattr(args, "learning_rate") else (default["learning_rate"] if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1e-1, 5e-5)),
         "lr_decay_rate": args.lr_decay_rate if hasattr(args, "lr_decay_rate") else (default["lr_decay_rate"] if not args.hyperparameter_tuning else tune.quniform(0.1, 1.0, 0.05)),
         "lr_decay_epoch": args.lr_decay_epoch if hasattr(args, "lr_decay_epoch") else (default["lr_decay_epoch"] if not args.hyperparameter_tuning else tune.randint(1, args.epoch - 1)),
         "weight_decay": args.weight_decay if hasattr(args, "weight_decay") else (default["weight_decay"] if not args.hyperparameter_tuning else tune.quniform(0.0, 0.1, 5e-5)),
-        "lamba": args.lamba if hasattr(args, "lamba") else (default["lamba"] if not args.hyperparameter_tuning else tune.qloguniform(1e-4, 1.0, 5e-5)),
-        "droprate_init_input": args.droprate_init_input if hasattr(args, "droprate_init_input") else (default["droprate_init_input"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
-        "droprate_init": args.droprate_init if hasattr(args, "droprate_init") else (default["droprate_init"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
-        "temperature": args.temperature if hasattr(args, "temperature") else (default["temperature"] if not args.hyperparameter_tuning else tune.quniform(0.01, 0.99, 0.01)),
     }
 
     data_path = os.path.join(os.path.join(os.path.dirname(__file__), DATA_DIR), args.data_set + '.data')
