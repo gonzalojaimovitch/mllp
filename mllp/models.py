@@ -168,6 +168,8 @@ class MLLP(nn.Module):
             self.conj.append(conj)
             self.disj.append(disj)
 
+        self.layers = self.conj + self.disj # NEW
+
     def forward(self, x, randomly_binarize=False):
         for conj, disj in zip(self.conj, self.disj):
             x = conj(x, randomly_binarize=randomly_binarize)
@@ -330,12 +332,16 @@ class MLLP(nn.Module):
                     cnt += 1
                 optimizer.step()
                 self.clip()
-            logging.info('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
-            print('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
-            loss_log.append(running_loss / num_examples)
+            
             # Change the set of weights to be binarized every epoch.
             self.randomly_binarize_layer_refresh()
 
+            total_active_weights = self.get_active_weights() # NEW
+            total_fully_active_weights = self.get_fully_active_weights() # NEW
+            
+            logging.info('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
+            print('epoch: {}, loss: {}'.format(epo, running_loss / num_examples))
+            loss_log.append(running_loss / num_examples)
             total_active_weights_list.append(total_active_weights) # NEW
             total_fully_active_weights_list.append(total_fully_active_weights) # NEW
 

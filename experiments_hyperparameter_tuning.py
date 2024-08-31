@@ -120,8 +120,8 @@ def experiment(args, data_path, info_path):
     test_f1_score_b_ikf = []
     total_active_weights_list_ikf = []
     total_fully_active_weights_list_ikf = []
+    total_rules_sizes_ikf = []
     k_run_time = []
-    total_rules = []
 
     for ikf in range(args.kfold):
         start = time.time()
@@ -206,8 +206,6 @@ def experiment(args, data_path, info_path):
         test_accuracy_b_ikf.append(acc_b)
         test_f1_score_ikf.append(f1)
         test_f1_score_b_ikf.append(f1_b)
-
-        net.get_final_rules()
 
         with open(args.crs_file, 'w') as f:
             rules_list = net.concept_rule_set_print(X_train, X_fname, y_fname, f)
