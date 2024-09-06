@@ -351,7 +351,7 @@ class MLLP(nn.Module):
                     acc_v, acc_v_b, f1_v, f1_v_b = self.test(X_validation, y_validation, False)
                     set_name = 'Validation'
                 else:
-                    acc_v, acc_v_b, f1_v, f1_v_b = self.test(X, y, False)
+                    acc_v, acc_v_b, f1_v, f1_v_b = (None, None, None, None)
                 acc, acc_b, f1, f1_b = self.test(X, y, False)
                 set_name = 'Training'
                 logging.info('-' * 60)

@@ -298,7 +298,7 @@ def experiment(args, data_path, info_path):
 if __name__ == '__main__':
     default = {
         "kfold": 5,
-        "use_validation_set": True,
+        "use_validation_set": False,
         "epoch": 400,
         "batch_size": 128,
         "num_samples": 1,
